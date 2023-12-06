@@ -379,6 +379,10 @@ class ThingsDataCollector(threading.Thread):
             telemetry['temp-ic-phy2'] = info['temp_phy2']
             telemetry['temp-ic-phy3'] = info['temp_phy3']
 
+            telemetry['temp-ic-ap'] = info['temp_ap']
+            telemetry['temp-ic-cp0'] = info['temp_cp0']
+            telemetry['temp-ic-cp2'] = info['temp_cp2']
+
         if 'link' in md:
             info = md['link']
             if 'delay' in info:
@@ -408,9 +412,9 @@ class ThingsDataCollector(threading.Thread):
                 sq = info['signal-quality']
                 telemetry['siqnal-qlt'] = sq
 
-            if 'signal-quality2' in info:
-                sq = info['signal-quality2']
-                telemetry['signal-qlt-ext'] = sq
+            # if 'signal-quality2' in info:
+            #     sq = info['signal-quality2']
+            #     telemetry['signal-qlt-ext'] = sq
 
             if 'bearer-id' in info:
                 id = info['bearer-id']

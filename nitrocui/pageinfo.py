@@ -143,6 +143,18 @@ class MainHandler(tornado.web.RequestHandler):
                 temp_str += f'3: {temp:.0f} °C, '
             tes.append(TE('ETH PHY', temp_str))
 
+            temp_str = ""
+            temp = d.get(0, 'sys-misc', 'temp_ap')
+            if temp:
+                temp_str += f'AP: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_cp0')
+            if temp:
+                temp_str += f'CP0: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_cp2')
+            if temp:
+                temp_str += f'CP2: {temp:.0f} °C, '
+            tes.append(TE('CPU/SB', temp_str))
+
             # v_in = md['sys-misc']['v_in']
             # v_rtc = md['sys-misc']['v_rtc']
             # tes.append(TE('Voltages', f'Input: {v_in:.1f} V, RTC: {v_rtc:.2f} V'))

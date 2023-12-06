@@ -22,8 +22,8 @@ from nitrocui.led import LED_BiColor
 from nitrocui.mm import MM
 # from nitrocui.obd_client import OBD2
 from nitrocui.phy_info import PhyInfo, PhyInfo5
-from nitrocui.sig_quality import SignalQuality_LTE
-from nitrocui.sysinfo_sysfs import SysInfoSysFs
+# from nitrocui.sig_quality import SignalQuality_LTE
+from nitrocui.sysinfo_thermal import SysInfoThermal
 from nitrocui.sysinfo_sensors import SysInfoSensors
 from nitrocui.vnstat import VnStat
 
@@ -129,12 +129,15 @@ class ModelWorker(threading.Thread):
         self.daemon = True
         self.name = 'model-worker'
 
-        if SysInfoSensors.sensors_present():
-            logger.info('using sensors based sysinfo module')
-            self.si = SysInfoSensors()
-        else:
-            logger.info('using sys-fs based sysinfo module')
-            self.si = SysInfoSysFs()
+        self.si = SysInfoSensors()
+        self.sit = SysInfoThermal()
+
+        # if SysInfoSensors.sensors_present():
+        #     logger.info('using sensors based sysinfo module')
+        #     self.si = SysInfoSensors()
+        # else:
+        #     logger.info('using sys-fs based sysinfo module')
+        #     self.si = SysInfoSysFs()
 
         # if self.model.linux_release.startswith("4"):
         #     self.broadr_phy = PhyInfo('broadr0')
@@ -177,6 +180,8 @@ class ModelWorker(threading.Thread):
 
     def _sysinfo(self):
         si = self.si
+        sit = self.sit
+
         si.poll()
 
         ver = dict()
@@ -208,8 +213,15 @@ class ModelWorker(threading.Thread):
         info['temp_phy1'] = si.temperature_phy1()
         info['temp_phy2'] = si.temperature_phy2()
         info['temp_phy3'] = si.temperature_phy3()
+
+        info['temp_ap'] = sit.temp_ap()
+        info['temp_cp0'] = sit.temp_cp0()
+        info['temp_cp2'] = sit.temp_cp2()
+        # print(info['temp_ap'], info['temp_cp0'], info['temp_cp2'])
+
         info['v_in'] = si.input_voltage()
         info['v_rtc'] = si.rtc_voltage()
+
         self.model.publish('sys-misc', info)
 
     def _disc(self):
@@ -286,11 +298,11 @@ class ModelWorker(threading.Thread):
                 info['signal-lte'] = sig
 
                 # Seldomly the signal fields are not defined, handle gracefully
-                if sig['rsrq'] and sig['rsrp']:
-                    # Compute an alternate signal quality indicator to ModemManager
-                    lte_q = SignalQuality_LTE(sig['rsrq'], sig['rsrp'])
-                    qual = lte_q.quality() * 100.0
-                    info['signal-quality2'] = round(qual)
+                # if sig['rsrq'] and sig['rsrp']:
+                #     # Compute an alternate signal quality indicator to ModemManager
+                #     lte_q = SignalQuality_LTE(sig['rsrq'], sig['rsrp'])
+                #     qual = lte_q.quality() * 100.0
+                #     info['signal-quality2'] = round(qual)
 
             elif sig_rat == 'umts':
                 sig = m.signal_umts(sig_info)
