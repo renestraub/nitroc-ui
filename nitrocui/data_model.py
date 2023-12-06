@@ -57,11 +57,11 @@ class Model(object):
         self.config = configparser.ConfigParser()
         try:
             self.config.read(CONF_FILE)
-            self.obd2_port = self.config.get('OBD2', 'Port')
-            self.obd2_speed = int(self.config.get('OBD2', 'Speed'))
+            # self.obd2_port = self.config.get('OBD2', 'Port')
+            # self.obd2_speed = int(self.config.get('OBD2', 'Speed'))
         except configparser.Error as e:
-            self.obd2_port = None
-            self.obd2_speed = None
+            # self.obd2_port = None
+            # self.obd2_speed = None
             logger.warning(f'ERROR: Cannot get config from {CONF_FILE}')
             logger.info(e)
 
@@ -141,8 +141,8 @@ class ModelWorker(threading.Thread):
         # else:
         #     self.broadr_phy = PhyInfo5('broadr0')
 
-        if self.model.obd2_port and self.model.obd2_speed:
-            self._obd2_setup(self.model.obd2_port, self.model.obd2_speed)
+        # if self.model.obd2_port and self.model.obd2_speed:
+        #     self._obd2_setup(self.model.obd2_port, self.model.obd2_speed)
 
         self._traffic_mon_setup()
 
@@ -165,9 +165,9 @@ class ModelWorker(threading.Thread):
             if cnt == 0 or cnt % 20 == 15:
                 self._disc()
 
-            if self.model.obd2_port:
-                # if cnt == 0 or cnt % 2 == 1:
-                self._obd2_poll()
+            # if self.model.obd2_port:
+            #     # if cnt == 0 or cnt % 2 == 1:
+            #     self._obd2_poll()
 
             if cnt == 0 or cnt % 20 == 12:
                 self._traffic()
@@ -201,6 +201,13 @@ class ModelWorker(threading.Thread):
         info['temp_mb'] = si.temperature_mb1_pcb()
         info['temp_mb2'] = si.temperature_mb2_pcb()
         info['temp_eth'] = si.temperature_eth_pcb()
+        info['temp_nmcf1'] = si.temperature_nmcf1_pcb()
+        info['temp_nmcf2'] = si.temperature_nmcf2_pcb()
+        info['temp_nmcf3'] = si.temperature_nmcf3_pcb()
+        info['temp_nmcf4'] = si.temperature_nmcf4_pcb()
+        info['temp_phy1'] = si.temperature_phy1()
+        info['temp_phy2'] = si.temperature_phy2()
+        info['temp_phy3'] = si.temperature_phy3()
         info['v_in'] = si.input_voltage()
         info['v_rtc'] = si.rtc_voltage()
         self.model.publish('sys-misc', info)
@@ -306,32 +313,32 @@ class ModelWorker(threading.Thread):
 
         self.model.publish('modem', info)
 
-    def _obd2_setup(self, port, speed):
-        logger.info(f"setting up OBD-II on port {port} at {speed} bps")
-        if speed != 250000 and speed != 500000:
-            speed = 500000
-            logger.info(f"unsupported bitrate, using {speed}")
+    # def _obd2_setup(self, port, speed):
+    #     logger.info(f"setting up OBD-II on port {port} at {speed} bps")
+    #     if speed != 250000 and speed != 500000:
+    #         speed = 500000
+    #         logger.info(f"unsupported bitrate, using {speed}")
 
-        self._obd2 = OBD2(port, speed)
-        self._obd2.setup()
+    #     self._obd2 = OBD2(port, speed)
+    #     self._obd2.setup()
 
-    def _obd2_poll(self):
-        if self._obd2:
-            info = dict()
+    # def _obd2_poll(self):
+    #     if self._obd2:
+    #         info = dict()
 
-            pid = self._obd2.speed()
-            if pid:
-                info['speed'] = pid.value()
-            else:
-                info['speed'] = 0.0
+    #         pid = self._obd2.speed()
+    #         if pid:
+    #             info['speed'] = pid.value()
+    #         else:
+    #             info['speed'] = 0.0
 
-            pid = self._obd2.engine_coolant_temp()
-            if pid:
-                info['coolant-temp'] = pid.value()
-            else:
-                info['coolant-temp'] = 0.0
+    #         pid = self._obd2.engine_coolant_temp()
+    #         if pid:
+    #             info['coolant-temp'] = pid.value()
+    #         else:
+    #             info['coolant-temp'] = 0.0
 
-            self.model.publish('obd2', info)
+    #         self.model.publish('obd2', info)
 
     # def _100base_t1(self):
     #     state = self.broadr_phy.state()

@@ -105,13 +105,46 @@ class MainHandler(tornado.web.RequestHandler):
             a, b, c = d.get((0, 0, 0), 'sys-misc', 'load')
             tes.append(TE('Load', f'{a}, {b}, {c}'))
 
+            tes.append(TE('<b>Temperatures</b>', ''))
+
+            temp_str = ""
             temp = d.get(0, 'sys-misc', 'temp_mb')
-            temp_str = f'Mainboard: {temp:.0f} °C'
+            temp_str += f'Mainboard: {temp:.0f} °C'
             temp = d.get(0, 'sys-misc', 'temp_mb2')
             temp_str += f', {temp:.0f} °C'
             temp = d.get(0, 'sys-misc', 'temp_eth')
             temp_str += f', ETH {temp:.0f} °C'
-            tes.append(TE('Temperatures', temp_str))
+            tes.append(TE('PCB', temp_str))
+
+            temp_str = ""
+            temp = d.get(0, 'sys-misc', 'temp_nmcf1')
+            if temp:
+                temp_str += f'1: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_nmcf2')
+            if temp:
+                temp_str += f'2: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_nmcf3')
+            if temp:
+                temp_str += f'3: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_nmcf4')
+            if temp:
+                temp_str += f'4: {temp:.0f} °C'
+            tes.append(TE('NMCF', temp_str))
+
+            temp_str = ""
+            temp = d.get(0, 'sys-misc', 'temp_phy1')
+            print(temp)
+            if temp:
+                temp_str += f'1: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_phy2')
+            print(temp)
+            if temp:
+                temp_str += f'2: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_phy3')
+            print(temp)
+            if temp:
+                temp_str += f'3: {temp:.0f} °C, '
+            tes.append(TE('ETH PHY', temp_str))
 
             # v_in = md['sys-misc']['v_in']
             # v_rtc = md['sys-misc']['v_rtc']
