@@ -18,7 +18,7 @@ from ubxlib.ubx_mon_ver import UbxMonVerPoll
 from ubxlib.ubx_upd_sos import UbxUpdSosAction
 from nitrocui.gpsd import Gpsd
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class Gnss(threading.Thread):

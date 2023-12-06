@@ -11,7 +11,7 @@ import tornado.web
 from nitrocui._version import __version__ as version
 from nitrocui.data_model import Model
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class RealtimeHandler(tornado.web.RequestHandler):
@@ -65,36 +65,39 @@ class RealtimeWebSocket(tornado.websocket.WebSocketHandler):
             tx = 0
         delay_in_ms = RealtimeWebSocket.safeget(0, md, 'link', 'delay') * 1000.0
         sq = RealtimeWebSocket.safeget((0), md, 'modem', 'signal-quality')
-        sq_ext = RealtimeWebSocket.safeget((0), md, 'modem', 'signal-quality2')
+        # sq_ext = RealtimeWebSocket.safeget((0), md, 'modem', 'signal-quality2')
         rat = RealtimeWebSocket.safeget('n/a', md, 'modem', 'access-tech')
-        if not rat:
+        rat2 = RealtimeWebSocket.safeget('n/a', md, 'modem', 'access-tech2')
+        if not rat and not rat2:
             rat = 'n/a'
+        if rat2:
+            rat = f'{rat} {rat2}'
         wwan0 = {
             'rx': f'{int(rx):,}',
             'tx': f'{int(tx):,}',
             'latency': str(delay_in_ms),
             'signal': str(sq),
-            'signal_ext': str(sq_ext),
+            # 'signal_ext': str(sq_ext),
             'rat': rat
         }
 
         default = {'fix': '-', 'lon': 0.0, 'lat': 0.0, 'speed': 0.0, 'pdop': 99.99}
-        pos = RealtimeWebSocket.safeget(default, md, 'gnss-pos')
+        # pos = RealtimeWebSocket.safeget(default, md, 'gnss-pos')
 
-        default_esf = {'esf-status': {'fusion': 'n/a', 'ins': 'n/a', 'imu': 'n/a', 'imu-align': 'n/a'}}
-        gnss_state = RealtimeWebSocket.safeget(default_esf, md, 'gnss-state')
-        esf_state = gnss_state['esf-status']
+        # default_esf = {'esf-status': {'fusion': 'n/a', 'ins': 'n/a', 'imu': 'n/a', 'imu-align': 'n/a'}}
+        # gnss_state = RealtimeWebSocket.safeget(default_esf, md, 'gnss-state')
+        # esf_state = gnss_state['esf-status']
 
         default = {'speed': 0.0, 'coolant-temp': 0.0}
-        obd2 = RealtimeWebSocket.safeget(default, md, 'obd2')
+        # obd2 = RealtimeWebSocket.safeget(default, md, 'obd2')
 
         info = {
             'clients': len(RealtimeWebSocket.connections),
             'time': RealtimeWebSocket.counter,
-            'pos': pos,
-            'esf': esf_state,
+            # 'pos': pos,
+            # 'esf': esf_state,
             'wwan0': wwan0,
-            'obd2': obd2,
+            # 'obd2': obd2,
         }
         [client.write_message(info) for client in RealtimeWebSocket.connections]
 

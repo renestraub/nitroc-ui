@@ -10,7 +10,7 @@ import queue
 import socket
 import threading
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class Gpsd(threading.Thread):

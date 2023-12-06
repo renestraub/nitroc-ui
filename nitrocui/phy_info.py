@@ -3,7 +3,7 @@ import os
 import re
 import subprocess
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class PhyInfo:

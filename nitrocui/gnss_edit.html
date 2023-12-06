@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <head>
-    <title>NG800/VCU Pro UI</title>
+    <title>NITROC UI</title>
     <link type="text/css" rel="stylesheet" href="{{ static_url('styles.css') }}">
     <link rel="shortcut icon" href="{{ static_url('favicon.ico') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ static_url('apple-touch-icon.png') }}">
@@ -21,12 +21,9 @@
                 <p></p>
                 {% if data %}
                 <button class="button button_green" onclick="window.location.href = '/gnss_edit'">Reload Config</button>
-                <button id="button_save" class="button button_green" type="button" disabled
-                    onclick="do_gnss_cfg_save()">Save Config</button>
+                <button id="button_save" class="button button_green" type="button" disabled onclick="do_gnss_cfg_save()">Save Config</button>
                 <p></p>
-                <button id="button_restart" class="button button_orange" type="button"
-                    onclick="do_gnss_restart()">Restart Gnss-Mgr</button>
-                {% end %}
+                <button id="button_restart" class="button button_orange" type="button" onclick="do_gnss_restart()">Restart Gnss-Mgr</button> {% end %}
             </div>
         </div>
 
@@ -35,9 +32,7 @@
             <div id="editor" hidden="hidden">
                 {% raw data %}
             </div>
-            {% else %}
-                Configuration file not present
-            {% end %}
+            {% else %} Configuration file not present {% end %}
             <p></p>
 
             <!-- The Modal Dialog -->
@@ -107,12 +102,11 @@
             resize_editor();
         }
 
-        editor.onkeyup = function () {
+        editor.onkeyup = function() {
             // enable save button, when content is changed (and only then)
             if (orig_gnss_cfg != ace_editor.getValue()) {
                 button_save.disabled = false;
-            }
-            else {
+            } else {
                 button_save.disabled = true;
             }
         }
@@ -137,12 +131,12 @@
         var timer_bar = document.getElementById("myTimerBar");
 
         // When the user clicks on <span> (x), close the modal
-        close_button.onclick = function () {
+        close_button.onclick = function() {
             modal_close();
         }
 
         // When the user clicks in the dialog stop the auto timer
-        dialog.onclick = function () {
+        dialog.onclick = function() {
             stop_close_timer();
         }
 
@@ -220,7 +214,7 @@
             xhttp.open("POST", uri, true);
             xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
 
-            xhttp.onreadystatechange = function () {
+            xhttp.onreadystatechange = function() {
                 if (this.readyState === XMLHttpRequest.DONE && this.status == 200) {
                     dialog_message.innerHTML += "<br>" + this.responseText;
                     start_close_timer(3);

@@ -1,7 +1,7 @@
 import logging
 import subprocess
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 MMCLI_BIN = '/usr/bin/mmcli'
 
@@ -161,6 +161,9 @@ class Modem():
     def access_tech(self, mmr):
         return mmr.text('modem.generic.access-technologies.value[1]')
 
+    def access_tech2(self, mmr):
+        return mmr.text('modem.generic.access-technologies.value[2]')
+
     def signal_quality(self, mmr):
         return mmr.dec('modem.generic.signal-quality.value')
 
@@ -168,30 +171,40 @@ class Modem():
         mmr = self._info('--signal-get')
         return mmr
 
-    def signal_access_tech(self, mmr):
-        # Reads signal information and decodes current RAT from provided values
-        # This works around the problem that access_tech() not always matches
-        # the RAT of signal()
-        #
-        # modem.signal.refresh.rate : 2
-        # ...
-        # modem.signal.gsm.rssi     : --
-        # modem.signal.umts.rssi    : --
-        # modem.signal.umts.rscp    : --
-        # modem.signal.umts.ecio    : --
-        # modem.signal.lte.rssi     : --
-        # modem.signal.lte.rsrq     : -14.00
-        # modem.signal.lte.rsrp     : -90.00
-        # modem.signal.lte.snr      : --
+    # def signal_access_tech(self, mmr):
+    #     # Reads signal information and decodes current RAT from provided values
+    #     # This works around the problem that access_tech() not always matches
+    #     # the RAT of signal()
+    #     #
+    #     # modem.signal.refresh.rate : 2
+    #     # ...
+    #     # modem.signal.gsm.rssi     : --
+    #     # modem.signal.umts.rssi    : --
+    #     # modem.signal.umts.rscp    : --
+    #     # modem.signal.umts.ecio    : --
+    #     # modem.signal.lte.rssi     : --
+    #     # modem.signal.lte.rsrq     : -14.00
+    #     # modem.signal.lte.rsrp     : -90.00
+    #     # modem.signal.lte.snr      : --
 
-        if mmr.number('modem.signal.lte.rsrq'):
-            return "lte"
-        elif mmr.number('modem.signal.umts.ecio'):
-            return "umts"
-        elif mmr.number('modem.signal.gsm.rssi'):
-            return "gsm"
-        else:
-            return None
+    #     if mmr.number('modem.signal.lte.rsrq'):
+    #         return "lte"
+    #     elif mmr.number('modem.signal.umts.ecio'):
+    #         return "umts"
+    #     elif mmr.number('modem.signal.gsm.rssi'):
+    #         return "gsm"
+    #     else:
+    #         return None
+
+    def signal_5g(self, mmr):
+        res = dict()
+        res['rsrp'] = mmr.number('modem.signal.lte.rsrp')
+        res['rsrq'] = mmr.number('modem.signal.lte.rsrq')
+        snr = mmr.number('modem.signal.lte.snr')
+        if snr:
+            res['snr'] = snr
+
+        return res
 
     def signal_lte(self, mmr):
         res = dict()

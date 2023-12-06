@@ -15,10 +15,11 @@ class SysInfoBase():
         return res
 
     def version(self):
-        # with open('/etc/version') as f:
-        #     res = f.readline().strip()
-        #     res = res.replace(';', ', ')
-        res = "1.2.3"
+        with open('/etc/issue') as f:
+            res = f.readline()
+            res = res.replace('\\n', '')
+            res = res.replace('\\l', '')
+            res = res.strip()
         return res
 
     def bootloader_version(self):

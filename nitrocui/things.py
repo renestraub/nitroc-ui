@@ -20,7 +20,7 @@ import pycurl
 from nitrocui.transmit_queue import TransmitQueue
 from nitrocui._version import __version__ as ui_version
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class Things(threading.Thread):
@@ -211,6 +211,9 @@ class Things(threading.Thread):
         body_as_json_bytes = body_as_json_string.encode()
         body_as_file_object = BytesIO(body_as_json_bytes)
 
+        # print(body_as_json_bytes)
+        # res = True
+
         # prepare and send. See also: pycurl.READFUNCTION to pass function instead
         c.setopt(pycurl.READDATA, body_as_file_object)
         c.setopt(pycurl.POSTFIELDSIZE, len(body_as_json_string))
@@ -299,12 +302,12 @@ class ThingsDataCollector(threading.Thread):
                     self._traffic(md)
 
                 # Force GNSS update once a minute, even if not moving
-                force_update = (cnt % 60) == 0
-                self._gnss(md, force_update)
+                # force_update = (cnt % 60) == 0
+                # self._gnss(md, force_update)
 
                 # OBD2 information every second, force update even when no change
-                force_update = (cnt % 60) == 0
-                self._obd2(md, force_update)
+                # force_update = (cnt % 60) == 0
+                # self._obd2(md, force_update)
 
                 cnt += 1
 
@@ -314,29 +317,29 @@ class ThingsDataCollector(threading.Thread):
         os_version = md['sys-version']['sys']
         serial = md['sys-version']['serial']
         hw_ver = md['sys-version']['hw']
-        bootloader_ver = md['sys-version']['bl']
+        # bootloader_ver = md['sys-version']['bl']
         uptime = md['sys-datetime']['uptime']
         attrs = {
             "serial": serial,
             "os-version": os_version,
             "ui-version": ui_version,
-            "bootloader-version": bootloader_ver,
+            # "bootloader-version": bootloader_ver,
             "hardware": hw_ver,
             "uptime": uptime
         }
 
-        if 'sys-boot' in md:
-            reason = md['sys-boot']['reason']
-            attrs['start-reason'] = reason
+        # if 'sys-boot' in md:
+        #     reason = md['sys-boot']['reason']
+        #     attrs['start-reason'] = reason
 
-        if 'gnss' in md:
-            info = md['gnss']
-            attrs['gnss-fw-version'] = info['fwVersion']
-            attrs['gnss-protocol'] = info['protocol']
+        # if 'gnss' in md:
+        #     info = md['gnss']
+        #     attrs['gnss-fw-version'] = info['fwVersion']
+        #     attrs['gnss-protocol'] = info['protocol']
 
-        if 'ubxlib' in md:
-            info = md['ubxlib']
-            attrs['ubxlib-version'] = info['version']
+        # if 'ubxlib' in md:
+        #     info = md['ubxlib']
+        #     attrs['ubxlib-version'] = info['version']
 
         if 'modem' in md:
             info = md['modem']
@@ -356,12 +359,25 @@ class ThingsDataCollector(threading.Thread):
         telemetry = dict()
         if 'sys-misc' in md:
             info = md['sys-misc']
-            telemetry['temperature'] = info['temp']
             telemetry['cpu-load'] = info['load'][0]
             telemetry['voltage-in'] = info['v_in']
             telemetry['mem-free'] = info['mem'][1]
-            if 'temp_mb' in info:
-                telemetry['temperature-board'] = info['temp_mb']
+
+            telemetry['temp-pcb-main1'] = info['temp_mb']
+            telemetry['temp-pcb-main2'] = info['temp_mb2']
+            telemetry['temp-pcb-eth'] = info['temp_eth']
+            if info['temp_nmcf1']:
+                telemetry['temp-pcb-nmcf1'] = info['temp_nmcf1']
+            if info['temp_nmcf2']:
+                telemetry['temp-pcb-nmcf2'] = info['temp_nmcf2']
+            if info['temp_nmcf3']:
+                telemetry['temp-pcb-nmcf3'] = info['temp_nmcf3']
+            if info['temp_nmcf4']:
+                telemetry['temp-pcb-nmcf4'] = info['temp_nmcf4']
+
+            telemetry['temp-ic-phy1'] = info['temp_phy1']
+            telemetry['temp-ic-phy2'] = info['temp_phy2']
+            telemetry['temp-ic-phy3'] = info['temp_phy3']
 
         if 'link' in md:
             info = md['link']
@@ -415,10 +431,10 @@ class ThingsDataCollector(threading.Thread):
             telemetry['wlan0-rx'] = f'{rx}'
             telemetry['wlan0-tx'] = f'{tx}'
 
-        if 'phy-broadr0' in md:
-            info = md['phy-broadr0']
-            quality = info['quality']
-            telemetry['broadr0-quality'] = f'{quality}'
+        # if 'phy-broadr0' in md:
+        #     info = md['phy-broadr0']
+        #     quality = info['quality']
+        #     telemetry['broadr0-quality'] = f'{quality}'
 
         if len(telemetry) > 0:
             self._data_queue.add(telemetry)
@@ -435,50 +451,52 @@ class ThingsDataCollector(threading.Thread):
         if len(telemetry) > 0:
             self._data_queue.add(telemetry)
 
-    def _gnss(self, md, force):
-        if 'gnss-pos' in md:
-            pos = md['gnss-pos']
-            if 'lon' in pos and 'lat' in pos:
-                lon_rad = math.radians(pos['lon'])
-                lat_rad = math.radians(pos['lat'])
+    # def _gnss(self, md, force):
+    #     if 'gnss-pos' in md:
+    #         pos = md['gnss-pos']
+    #         if 'lon' in pos and 'lat' in pos:
+    #             lon_rad = math.radians(pos['lon'])
+    #             lat_rad = math.radians(pos['lat'])
 
-                d = self._distance(lon_rad, lat_rad)
-                if force or d > self.GNSS_UPDATE_DISTANCE:
-                    self._data_queue.add(pos)
+    #             d = self._distance(lon_rad, lat_rad)
+    #             if force or d > self.GNSS_UPDATE_DISTANCE:
+    #                 self._data_queue.add(pos)
 
-                    self.lat_last_rad = lat_rad
-                    self.lon_last_rad = lon_rad
+    #                 self.lat_last_rad = lat_rad
+    #                 self.lon_last_rad = lon_rad
 
-    def _distance(self, lon_rad, lat_rad):
-        R = 6371.0e3
-        d_lat_rad = self.lat_last_rad - lat_rad
-        d_lon_rad = self.lon_last_rad - lon_rad
+    # def _distance(self, lon_rad, lat_rad):
+    #     R = 6371.0e3
+    #     d_lat_rad = self.lat_last_rad - lat_rad
+    #     d_lon_rad = self.lon_last_rad - lon_rad
 
-        a = math.sin(d_lat_rad / 2) * math.sin(d_lat_rad / 2) + \
-            math.cos(lat_rad) * math.cos(self.lat_last_rad) * \
-            math.sin(d_lon_rad / 2) * math.sin(d_lon_rad / 2)
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
-        d = R * c
+    #     a = math.sin(d_lat_rad / 2) * math.sin(d_lat_rad / 2) + \
+    #         math.cos(lat_rad) * math.cos(self.lat_last_rad) * \
+    #         math.sin(d_lon_rad / 2) * math.sin(d_lon_rad / 2)
+    #     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    #     d = R * c
 
-        return d
+    #     return d
 
-    def _obd2(self, md, force):
-        if 'obd2' in md:
-            info = md['obd2']
-            speed = info['speed']
-            speed_diff = speed - self.obd2_last_speed
-            # print(f'TB telemetry {speed} {self.obd2_last_speed}')
-            if force or abs(speed_diff) >= 1.0:
-                data = {
-                    'obd2-speed': f'{speed}',
-                }
-                self._data_queue.add(data)
+    # def _obd2(self, md, force):
+    #     if 'obd2' in md:
+    #         info = md['obd2']
+    #         speed = info['speed']
+    #         speed_diff = speed - self.obd2_last_speed
+    #         # print(f'TB telemetry {speed} {self.obd2_last_speed}')
+    #         if force or abs(speed_diff) >= 1.0:
+    #             data = {
+    #                 'obd2-speed': f'{speed}',
+    #             }
+    #             self._data_queue.add(data)
 
-                self.obd2_last_speed = speed
+    #             self.obd2_last_speed = speed
 
     @staticmethod
     def rat_to_number(rat_str):
-        if 'lte' in rat_str:
+        if '5gnr' in rat_str:
+            return 5
+        elif 'lte' in rat_str:
             return 4
         elif 'umts' in rat_str:
             return 3

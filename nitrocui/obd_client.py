@@ -18,7 +18,7 @@ from nitrocui.timeout import Timeout
 RX_TIMEOUT = 1.0
 
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class OBD2():

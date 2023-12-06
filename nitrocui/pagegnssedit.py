@@ -13,7 +13,7 @@ from nitrocui.data_model import Model
 CONFIG_FILE = '/etc/gnss/gnss0.conf'
 
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class GnssEditHandler(tornado.web.RequestHandler):
@@ -39,7 +39,7 @@ class GnssEditHandler(tornado.web.RequestHandler):
 
         except KeyError:
             self.render('gnss_edit.html',
-                        title='NG800/VCU Pro',
+                        title='NITROC',
                         data=None,
                         version='n/a')
 

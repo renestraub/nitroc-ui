@@ -1,6 +1,6 @@
 {
-    "name": "NG800/VCU Web User Interface",
-    "short_name": "NG800/VCU UI",
+    "name": "NITROC Web User Interface",
+    "short_name": "NITROC UI",
     "display": "standalone",
-    "description": "Minimal NG800/VCU Pro Web Based User Interface"
+    "description": "Minimal NITROC Web Based User Interface"
 }

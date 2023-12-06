@@ -37,7 +37,6 @@ class SysInfoSensors(SysInfoBase):
         cp = subprocess.run([SysInfoSensors.BIN], stdout=subprocess.PIPE)
         res = cp.stdout.decode().strip()
         self.sensor_res = res
-        # print(res)
 
         self.temp_mb1 = self._extract('lm75-i2c-0-48', 'temp1')
         self.temp_mb2 = self._extract('lm75-i2c-0-49', 'temp1')
@@ -101,6 +100,6 @@ class SysInfoSensors(SysInfoBase):
         for matchNum, match in enumerate(matches, start=1):
             # print ("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()))
             if len(match.groups()) == 1:
-                groupNum = 1
-                print ("Group {groupNum} found at {start}-{end}: {group}".format(groupNum = groupNum, start = match.start(groupNum), end = match.end(groupNum), group = match.group(groupNum)))
+                # groupNum = 1
+                # print ("Group {groupNum} found at {start}-{end}: {group}".format(groupNum = groupNum, start = match.start(groupNum), end = match.end(groupNum), group = match.group(groupNum)))
                 return float(match.group(1))

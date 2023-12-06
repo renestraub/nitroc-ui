@@ -1,10 +1,10 @@
 """
-vcu-ui data model
+NITROC data model
 
 collects data from various sources and stores them in a in-memory
 "database".
 
-To enable ODB-II speed polling add the following to the vcu-ui configuration
+To enable ODB-II speed polling add the following to the nitroc configuration
 file /etc/nitrocui.conf
 
 [OBD2]
@@ -30,7 +30,7 @@ from nitrocui.vnstat import VnStat
 CONF_FILE = '/etc/nitrocui.conf'
 
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class Model(object):
@@ -256,8 +256,12 @@ class ModelWorker(threading.Thread):
 
             state = m.state(m_info)
             access_tech = m.access_tech(m_info)
+            access_tech2 = m.access_tech2(m_info)
+
             info['state'] = state
             info['access-tech'] = access_tech
+            if access_tech2:    # Optional 2nd access tech, i.e. lte and 5gnr
+                info['access-tech2'] = access_tech2
 
             loc_info = m.location()
             if loc_info['mcc']:
@@ -270,10 +274,14 @@ class ModelWorker(threading.Thread):
             # information from ModemManager is not reliable
             sig_info = m.signal_get()
 
-            sig_rat = m.signal_access_tech(sig_info)
-            info['access-tech2'] = sig_rat
+            sig_rat = m.access_tech(sig_info)
+            sig_rat2 = m.access_tech2(sig_info)
 
-            if sig_rat == 'lte':
+            if sig_rat2 == '5gnr':
+                sig = m.signal_5g(sig_info)
+                info['signal-5g'] = sig
+
+            elif sig_rat == 'lte':
                 sig = m.signal_lte(sig_info)
                 info['signal-lte'] = sig
 

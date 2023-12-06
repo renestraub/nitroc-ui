@@ -4,7 +4,7 @@ import time
 
 from ping3 import ping
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 # PING_HOST = '1.1.1.1'

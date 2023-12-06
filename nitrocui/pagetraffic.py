@@ -9,7 +9,7 @@ import tornado.web
 from nitrocui._version import __version__ as version
 from nitrocui.data_model import Model
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class TE(object):
@@ -58,7 +58,7 @@ class TrafficHandler(tornado.web.RequestHandler):
 
         except KeyError:
             self.render('traffic.html',
-                        title='NG800/VCU Pro',
+                        title='NITROC',
                         table=None,
                         data=None,
                         version='n/a')

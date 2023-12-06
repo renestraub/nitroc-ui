@@ -4,7 +4,7 @@ import time
 
 from nitrocui.gpsd import Gpsd
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class GnssPosition(threading.Thread):

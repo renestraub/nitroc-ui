@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <head>
-    <title>NG800/VCU Pro UI</title>
+    <title>NITROC UI</title>
     <link type="text/css" rel="stylesheet" href="{{ static_url('styles.css') }}">
     <link rel="shortcut icon" href="{{ static_url('favicon.ico') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ static_url('apple-touch-icon.png') }}">
@@ -19,7 +19,7 @@
             <div class="btn-group">
                 <button class="button" onclick="window.location.href = '/'">Home</button>
                 <p></p>
-<!--
+                <!--
                 <button id="button_ser2net" class="button button_orange" type="button" onclick="do_sertonet()">uCenter ser2net</button>
                 <p></p>
 -->
@@ -28,8 +28,7 @@
                 <button id="button_state_clear" class="button button_green" type="button" onclick="do_state_clear()">Clear GNSS State</button>
                 <p></p>
                 <button id="button_settings_save" class="button button_orange" type="button" onclick="do_factory_reset()">Factory Reset Settings</button>
-                <button id="button_col_start" class="button button_orange" type="button" onClick="do_gnss_coldstart()">Cold Start</button>
-                {% end %}
+                <button id="button_col_start" class="button button_orange" type="button" onClick="do_gnss_coldstart()">Cold Start</button> {% end %}
                 <p></p>
                 <button class="button" onclick="window.location.href = '/gnss'">Refresh Page</button>
             </div>
@@ -37,16 +36,16 @@
 
         <div class="main">
             <table>
-            {% if table %}
-                {% for entry in table %}
+                {% if table %} {% for entry in table %}
                 <tr>
                     <td>{% raw entry.header %}</td>
                     <td>{% raw entry.text %}</td>
                 </tr>
-                {% end %}
-            {% end %}
-            <tr></tr><td></td><td></td>
-            {% if data %}
+                {% end %} {% end %}
+                <tr></tr>
+                <td></td>
+                <td></td>
+                {% if data %}
                 <tr>
                     <td>UART</td>
                     <td>{{ data['uart_settings'] }}</td>
@@ -91,33 +90,31 @@
                 <tr>
                     <td>Mounting</td>
                     <td>
-                        Yaw [0, 360]: <input type="number" id="imu_cfg_yaw" class="input_vrp" min="0" max="360" step="1">
-                        Pitch [-90, 90]: <input type="number" id="imu_cfg_pitch" class="input_vrp" min="-90" max="90" step="1"}>
-                        Roll [-180, 180]: <input type="number" id="imu_cfg_roll" class="input_vrp" min="-180" max="180" step="1">
+                        Yaw [0, 360]: <input type="number" id="imu_cfg_yaw" class="input_vrp" min="0" max="360" step="1"> Pitch [-90, 90]: <input type="number" id="imu_cfg_pitch" class="input_vrp" min="-90" max="90" step="1" }> Roll [-180, 180]:
+                        <input
+                            type="number" id="imu_cfg_roll" class="input_vrp" min="-180" max="180" step="1">
                     </td>
                 </tr>
 
                 <tr>
                     <td>VRP-Antenna</td>
                     <td>
-                        X [-200..1000 cm]: <input type="number" id="vrp-ant-x" class="input_vrp" min="-200" max="1000" step="1">
-                        Y [-200..200 cm]: <input type="number" id="vrp-ant-y" class="input_vrp" min="-200" max="200" step="1">
-                        Z [-100..400 cm]: <input type="number" id="vrp-ant-z" class="input_vrp" min="-100" max="400" step="1">
+                        X [-200..1000 cm]: <input type="number" id="vrp-ant-x" class="input_vrp" min="-200" max="1000" step="1"> Y [-200..200 cm]: <input type="number" id="vrp-ant-y" class="input_vrp" min="-200" max="200" step="1"> Z [-100..400 cm]:
+                        <input
+                            type="number" id="vrp-ant-z" class="input_vrp" min="-100" max="400" step="1">
                     </td>
                 </tr>
 
                 <tr>
                     <td>VRP-IMU</td>
                     <td>
-                        X [-200..1000 cm]: <input type="number" id="vrp-imu-x" class="input_vrp" min="-200" max="1000" step="1">
-                        Y [-200..200 cm]: <input type="number" id="vrp-imu-y" class="input_vrp" min="-200" max="200" step="1">
-                        Z [-100..400 cm]: <input type="number" id="vrp-imu-z" class="input_vrp" min="-100" max="400" step="1">
+                        X [-200..1000 cm]: <input type="number" id="vrp-imu-x" class="input_vrp" min="-200" max="1000" step="1"> Y [-200..200 cm]: <input type="number" id="vrp-imu-y" class="input_vrp" min="-200" max="200" step="1"> Z [-100..400 cm]:
+                        <input
+                            type="number" id="vrp-imu-z" class="input_vrp" min="-100" max="400" step="1">
                     </td>
                 </tr>
             </table>
-            {% end %}
-
-            {% if message %}
+            {% end %} {% if message %}
             <p>Status: {{message}}</p>
             {% end %}
 
@@ -147,29 +144,36 @@
 
     <script>
         // data provided to web page
-        {% if data %}
-            {% for key, value in data.items() %}
-                localStorage.{{key}} = '{{value}}';
-            {% end %}
+        { %
+            if data %
+        } { %
+            for key, value in data.items() %
+        }
+        localStorage. {
+            {
+                key
+            }
+        } = '{{value}}'; { % end %
+        }
 
-            // Set UI configuration items with values provided by system
-            // console.log(`system dyn_model is {{data['dyn_model']}}`)
-            // console.log(`system nmea is {{data['nmea_protocol']}}`)
-            document.getElementById("dyn_model").value = "{{data['dyn_model']}}";
-            document.getElementById("auto_imu_align").value = "{{data['imu_auto_align']}}";
+        // Set UI configuration items with values provided by system
+        // console.log(`system dyn_model is {{data['dyn_model']}}`)
+        // console.log(`system nmea is {{data['nmea_protocol']}}`)
+        document.getElementById("dyn_model").value = "{{data['dyn_model']}}";
+        document.getElementById("auto_imu_align").value = "{{data['imu_auto_align']}}";
 
-            document.getElementById("imu_cfg_roll").value = "{{data['imu_cfg_roll']}}";
-            document.getElementById("imu_cfg_pitch").value = "{{data['imu_cfg_pitch']}}";
-            document.getElementById("imu_cfg_yaw").value = "{{data['imu_cfg_yaw']}}";
+        document.getElementById("imu_cfg_roll").value = "{{data['imu_cfg_roll']}}";
+        document.getElementById("imu_cfg_pitch").value = "{{data['imu_cfg_pitch']}}";
+        document.getElementById("imu_cfg_yaw").value = "{{data['imu_cfg_yaw']}}";
 
-            document.getElementById("vrp-ant-x").value = "{{data['vrp_ant_x']}}";
-            document.getElementById("vrp-ant-y").value = "{{data['vrp_ant_y']}}";
-            document.getElementById("vrp-ant-z").value = "{{data['vrp_ant_z']}}";
+        document.getElementById("vrp-ant-x").value = "{{data['vrp_ant_x']}}";
+        document.getElementById("vrp-ant-y").value = "{{data['vrp_ant_y']}}";
+        document.getElementById("vrp-ant-z").value = "{{data['vrp_ant_z']}}";
 
-            document.getElementById("vrp-imu-x").value = "{{data['vrp_imu_x']}}";
-            document.getElementById("vrp-imu-y").value = "{{data['vrp_imu_y']}}";
-            document.getElementById("vrp-imu-z").value = "{{data['vrp_imu_z']}}";
-        {% end %}
+        document.getElementById("vrp-imu-x").value = "{{data['vrp_imu_x']}}";
+        document.getElementById("vrp-imu-y").value = "{{data['vrp_imu_y']}}";
+        document.getElementById("vrp-imu-z").value = "{{data['vrp_imu_z']}}"; { % end %
+        }
 
         var timer_close = null;
 
@@ -180,7 +184,7 @@
         var dialog_console = document.getElementById("console");
         var close_button = document.getElementById("myCloseButton");
         var timer_bar = document.getElementById("myTimerBar");
-        
+
         // When the user clicks on <span> (x), close the modal
         close_button.onclick = function() {
             modal_close();
@@ -215,7 +219,7 @@
         function start_close_timer(secs) {
             timer_bar.setAttribute("class", "modal-timer-bar-active");
             timer_bar.style.transition = `width ${secs}s linear`;
-            timer_close = setTimeout(timer_modal_close, secs*1000);
+            timer_close = setTimeout(timer_modal_close, secs * 1000);
         }
 
         function stop_close_timer() {

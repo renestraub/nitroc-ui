@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <head>
-    <title>NG800/VCU Pro UI</title>
+    <title>NITROC</title>
     <link type="text/css" rel="stylesheet" href="{{ static_url('styles.css') }}">
     <link rel="shortcut icon" href="{{ static_url('favicon.ico') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ static_url('apple-touch-icon.png') }}">
@@ -25,26 +25,21 @@
 
         <div class="main">
             {% if data['traffic-wwan0'] == 'true' %}
-                <table>
-                    {% if table %}
-                        {% for entry in table %}
-                        <tr>
-                            <td>{% raw entry.header %}</td>
-                            <td>{% raw entry.text %}</td>
-                        </tr>
-                        {% end %}
-                    {% end %}
-                </table>
+            <table>
+                {% if table %} {% for entry in table %}
+                <tr>
+                    <td>{% raw entry.header %}</td>
+                    <td>{% raw entry.text %}</td>
+                </tr>
+                {% end %} {% end %}
+            </table>
 
-                <p></p>
-                <img class="img_traffic" src="/traffic/img/summary.png">
-                <p></p>
-                <img class="img_traffic" src="/traffic/img/daily.png">
-                <p></p>
-                Note: Values are updated every five minutes.
-            {% else %}
-                Sorry, there is no traffic logging present on this device. Consider upgrading to a newer release.
-            {% end %}
+            <p></p>
+            <img class="img_traffic" src="/traffic/img/summary.png">
+            <p></p>
+            <img class="img_traffic" src="/traffic/img/daily.png">
+            <p></p>
+            Note: Values are updated every five minutes. {% else %} Sorry, there is no traffic logging present on this device. Consider upgrading to a newer release. {% end %}
             <p></p>
             <p></p>
         </div>

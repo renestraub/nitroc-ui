@@ -9,7 +9,7 @@ from nitrocui._version import __version__ as version
 from nitrocui.data_model import Model
 # from nitrocui.gnss_model import Gnss
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class TE(object):
@@ -136,14 +136,14 @@ class GnssHandler(tornado.web.RequestHandler):
 
         #     except KeyError as e:
         #         self.render('gnss.html',
-        #                     title='NG800/VCU Pro',
+        #                     title='NITROC',
         #                     message=f'Data lookup error: {e} not found',
         #                     table=None,
         #                     data=None,
         #                     version='n/a')
         # else:
         #     self.render('gnss.html',
-        #                 title='NG800/VCU Pro',
+        #                 title='NITROC',
         #                 message='gpsd service not running',
         #                 table=None,
         #                 data=None,

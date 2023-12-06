@@ -1,5 +1,5 @@
 """
-Minimal Web UI for VCU/NG800 automotive gateway
+Minimal Web UI for NITROC
 
 Uses Tornado webserver
 """
@@ -32,13 +32,13 @@ from nitrocui.things import Things
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(module)-12s %(message)s'
 logging.basicConfig(format=FORMAT)
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 logger.setLevel(logging.INFO)
 logger.setLevel(logging.DEBUG)
 
 
 # Init section
-logger.info(f'welcome to NG800/VCU-UI v{version}')
+logger.info(f'welcome to NITROC-UI v{version}')
 
 path = os.path.abspath(__file__)
 module_path = os.path.dirname(path)

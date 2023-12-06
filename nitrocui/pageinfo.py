@@ -9,7 +9,7 @@ from nitrocui._version import __version__ as version
 from nitrocui.data_model import Model
 from nitrocui.tools import secs_to_hhmm
 
-logger = logging.getLogger('vcu-ui')
+logger = logging.getLogger('nitroc-ui')
 
 
 class TE(object):
@@ -133,15 +133,12 @@ class MainHandler(tornado.web.RequestHandler):
 
             temp_str = ""
             temp = d.get(0, 'sys-misc', 'temp_phy1')
-            print(temp)
             if temp:
                 temp_str += f'1: {temp:.0f} °C, '
             temp = d.get(0, 'sys-misc', 'temp_phy2')
-            print(temp)
             if temp:
                 temp_str += f'2: {temp:.0f} °C, '
             temp = d.get(0, 'sys-misc', 'temp_phy3')
-            print(temp)
             if temp:
                 temp_str += f'3: {temp:.0f} °C, '
             tes.append(TE('ETH PHY', temp_str))
@@ -180,17 +177,14 @@ class MainHandler(tornado.web.RequestHandler):
 
                 state = mi['state']
 
-                # Sometimes ModemManager seems to report wrong access tech
-                # Display RAT as reported by --signal-get if it differs
+                # # Sometimes ModemManager seems to report wrong access tech
+                # # Display RAT as reported by --signal-get if it differs
                 access_tech = mi['access-tech']
-                access_tech2 = access_tech
+                access_tech2 = mi['access-tech2']
                 if 'access-tech2' in mi:
-                    access_tech2 = mi['access-tech2']
-
-                if access_tech == access_tech2:
-                    tes.append(TE('State', f'{state}, {access_tech}'))
+                    tes.append(TE('State', f'{state}, {access_tech} {access_tech2}'))
                 else:
-                    tes.append(TE('State', f'{state}, {access_tech} ({access_tech2})'))
+                    tes.append(TE('State', f'{state}, {access_tech}'))
 
                 if 'location' in mi:
                     loc_info = mi['location']
@@ -203,16 +197,22 @@ class MainHandler(tornado.web.RequestHandler):
                         tes.append(TE('Cell', text))
                         data.update(loc_info)
 
-                # Display quality as reported by MM and based on VCU-UI calculation
+                # Display quality as reported by MM
                 sq = mi['signal-quality']
                 sq_str = f'{sq}%'
-                if 'signal-quality2' in mi:
-                    sq2 = mi['signal-quality2']
-                    sq_str += f' ({sq2:.0f}%)'
+                # if 'signal-quality2' in mi:
+                #     sq2 = mi['signal-quality2']
+                #     sq_str += f' ({sq2:.0f}%)'
                 tes.append(TE('Signal', sq_str))
 
                 # Raw signal quality information
-                if 'signal-lte' in mi:
+                if 'signal-5g' in mi:
+                    text = nice([('rsrp', 'RSRP', 'dBm'),
+                                ('rsrq', 'RSRQ', 'dB'),
+                                ('snr', 'S/N', 'dB')],
+                                sig, True)
+                    tes.append(TE('Signal 5G', text))
+                elif 'signal-lte' in mi:
                     sig = mi['signal-lte']
                     if 'rssi' in sig and 'snr' in sig:
                         text = nice([('rsrp', 'RSRP', 'dBm'),
@@ -309,7 +309,7 @@ class MainHandler(tornado.web.RequestHandler):
         except KeyError as e:
             logger.warning(f'lookup error {e}')
             self.render('main.html',
-                        title='NG800/VCU Pro',
+                        title='NITROC',
                         message=f'Data lookup error: {e} not found',
                         table=None,
                         data=None,
