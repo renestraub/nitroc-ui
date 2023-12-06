@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<head>
+    <title>NG800/VCU Pro UI</title>
+    <link type="text/css" rel="stylesheet" href="{{ static_url('styles.css') }}">
+    <link rel="shortcut icon" href="{{ static_url('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ static_url('apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ static_url('manifest.json') }}">
+</head>
+
+<body>
+    <h1>{{ title }}</h1>
+
+    <div style="overflow:auto">
+
+        <div class="menu">
+            <div class="btn-group">
+                <button class="button" onclick="window.location.href = '/realtime'">Realtime Display</button>
+                <button class="button" onclick="window.location.href = '/traffic'">Traffic</button>
+                <!-- <button class="button" onclick="window.location.href = '/gnss'">GNSS Status</button>
+                <button class="button" onclick="window.location.href = '/gnss_edit'">GNSS Config</button> -->
+                <p></p>
+                <button id="button_location" class="button button_green" type="button" onclick="do_location()">Enable Location</button>
+                <button id="button_find_cell" class="button button_green" type="button" onclick="do_cell_find()">Find Cell</button>
+                <p></p>
+                {% if not cloud_log %}
+                <button id="button_cloud" class="button button_orange" type="button" onclick="do_cloud(true)">Start Cloud Logging</button> {% else %}
+                <button id="button_cloud" class="button button_green" type="button" onclick="do_cloud(false)">Stop Cloud Logging</button> {% end %}
+                <p></p>
+                <button id="button_modem_reset" class="button button_orange" type="button" onclick="do_modem_reset()">Reset GSM Modem</button>
+                <!-- <button id="button_sleep" class="button button_orange" type="button" onclick="do_system_sleep()">Sleep</button> -->
+                <button id="button_reboot" class="button button_red" type="button" onclick="do_system_reboot()">Reboot</button>
+                <button id="button_powerdown" class="button button_red" type="button" onclick="do_system_powerdown()">Powerdown</button>
+                <p></p>
+                <button class="button button_slider" onclick="window.location.href = '/'">Refresh Page</button>
+                <label class="switch">
+                    <input id="checkbox_auto_refresh" type="checkbox" onclick="do_auto_refresh(this)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="main">
+            <table>
+                {% if table %} {% for entry in table %}
+                <tr>
+                    <td>{% raw entry.header %}</td>
+                    <td>{% raw entry.text %}</td>
+                </tr>
+                {% end %} {% end %}
+            </table>
+
+            {% if message %}
+            <p>Status: {{message}}</p>
+            {% end %}
+
+            <br><br>
+
+            <!-- The Modal Dialog -->
+            <div id="myModal" class="modal">
+                <!-- Modal content -->
+                <div id="myDialog" class="modal-content">
+                    <div id="myTimerBar" class="modal-timer-bar"></div>
+                    <div class="modal-header">
+                        <span id="myCloseButton" class="close">&times;</span>
+                        <h2>Information</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p id=message></p>
+                        <pre class="terminal" id="console">
+                        <!-- room for console output -->
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+        // data provided to web page
+        { %
+            if data %
+        } { %
+            for key, value in data.items() %
+        }
+        localStorage. {
+            {
+                key
+            }
+        } = {
+            {
+                value
+            }
+        }; { % end %
+        } { % end %
+        }
+
+        var timer_close = null;
+        var timer_refresh = null;
+        var checkbox_auto_refresh = document.getElementById("checkbox_auto_refresh");
+
+        // Get the modal
+        var modal = document.getElementById("myModal");
+        var dialog = document.getElementById("myDialog");
+        var dialog_message = document.getElementById("message");
+        var dialog_console = document.getElementById("console");
+        var close_button = document.getElementById("myCloseButton");
+        var timer_bar = document.getElementById("myTimerBar");
+
+        // When the user clicks on <span> (x), close the modal
+        close_button.onclick = function() {
+            modal_close();
+        }
+
+        // When the user clicks in the dialog stop the auto timer
+        dialog.onclick = function() {
+            stop_close_timer();
+        }
+
+        function model_open(message) {
+            modal.style.display = "block";
+            dialog_message.innerHTML = message;
+            dialog_console.innerHTML = "";
+            dialog_console.style.display = "none";
+            timer_bar.style.display = "none";
+        }
+
+        function modal_close() {
+            stop_close_timer();
+            modal.style.display = "none";
+
+            // check if this is safe
+            location.reload();
+        }
+
+        function modal_enable_close_timer() {
+            timer_bar.style.display = "block";
+            timer_bar.setAttribute("class", "modal-timer-bar");
+        }
+
+        function start_close_timer(secs) {
+            timer_bar.setAttribute("class", "modal-timer-bar-active");
+            timer_bar.style.transition = `width ${secs}s linear`;
+            timer_close = setTimeout(timer_modal_close, secs * 1000);
+        }
+
+        function stop_close_timer() {
+            timer_bar.style.transition = "width 1s linear";
+            timer_bar.setAttribute("class", "modal-timer-bar");
+            if (timer_close != null) {
+                console.log("stopping timer");
+                clearTimeout(timer_close);
+                timer_close = null;
+            }
+        }
+
+        function timer_modal_close() {
+            console.log("timer elapsed");
+            modal_close();
+        }
+
+        /* Actions */
+
+        console.log("page loading")
+        console.log(`refresh: ${localStorage.refresh}`)
+
+        if (localStorage.refresh == "on") {
+            console.log("restart refresh timer");
+            checkbox_auto_refresh.checked = true;
+            do_auto_refresh(checkbox_auto_refresh)
+        }
+
+        function do_auto_refresh(elem) {
+            // console.log("refresh toggle")
+            // console.log(`${elem.checked}`)
+
+            if (elem.checked) {
+                localStorage.refresh = "on";
+                timer_refresh = setTimeout(function() {
+                    console.log("reloading page");
+                    location.reload();
+                }, 5000);
+            } else {
+                localStorage.refresh = "off";
+                clearInterval(timer_refresh)
+                timer_refresh == null
+            }
+        }
+
+        function do_location() {
+            operate("Enabling 3GPP location detection", "do_location");
+        }
+
+        function do_modem_reset() {
+            res = confirm("Do you really want to reset the GSM modem?");
+            if (res) {
+                operate("Resetting modem", "do_modem_reset");
+            }
+        }
+
+        function do_system_sleep() {
+            res = confirm("Do you want to sleep the system for 5 minutes?");
+            if (res) {
+                operate("Putting system to sleep", "do_system_sleep");
+            }
+        }
+
+        function do_system_reboot() {
+            res = confirm("Do you really want to reboot the system?");
+            if (res) {
+                operate("Doing system reboot", "do_system_reboot");
+            }
+        }
+
+        function do_system_powerdown() {
+            res = confirm("Do you really want to powerdown the system?");
+            if (res) {
+                operate("Powering down system", "do_system_powerdown");
+            }
+        }
+
+        function do_cell_find() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    dialog_message.innerHTML += "<br>" + this.responseText;
+                }
+            };
+
+            model_open('Trying to locate cell');
+
+            mcc = localStorage.mcc;
+            mnc = localStorage.mnc;
+            lac = localStorage.lac;
+            cid = localStorage.cid;
+            query = `mcc=${mcc}&mnc=${mnc}&lac=${lac}&cid=${cid}`;
+            uri = "/do_cell_locate?" + encodeURI(query);
+            xhttp.open("GET", uri, true);
+            xhttp.send();
+        }
+
+        function do_cloud(enable) {
+            if (enable) {
+                title = "Starting cloud logging";
+                query = `enable=True`;
+            } else {
+                title = "Stopping cloud logging";
+                query = `enable=False`;
+            }
+            uri = "/do_cloud?" + encodeURI(query);
+            operate(title, uri);
+        }
+
+        /* Helper method for basic dialog/request/response sequence */
+        function operate(title, uri) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    dialog_message.innerHTML += "<br>" + this.responseText;
+                    start_close_timer(3);
+                }
+            };
+
+            model_open(title);
+            modal_enable_close_timer();
+
+            xhttp.open("GET", uri, true);
+            xhttp.send();
+        }
+    </script>
+</body>
+
+</html>

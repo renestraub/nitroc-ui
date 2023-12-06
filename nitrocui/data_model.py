@@ -1,0 +1,360 @@
+"""
+vcu-ui data model
+
+collects data from various sources and stores them in a in-memory
+"database".
+
+To enable ODB-II speed polling add the following to the vcu-ui configuration
+file /etc/nitrocui.conf
+
+[OBD2]
+Port = CAN port to use, e.g. can0
+Speed = Bitrate to use. Either 250000 or 500000
+"""
+
+import configparser
+import logging
+import platform
+import threading
+import time
+
+from nitrocui.led import LED_BiColor
+from nitrocui.mm import MM
+# from nitrocui.obd_client import OBD2
+from nitrocui.phy_info import PhyInfo, PhyInfo5
+from nitrocui.sig_quality import SignalQuality_LTE
+from nitrocui.sysinfo_sysfs import SysInfoSysFs
+from nitrocui.sysinfo_sensors import SysInfoSensors
+from nitrocui.vnstat import VnStat
+
+CONF_FILE = '/etc/nitrocui.conf'
+
+
+logger = logging.getLogger('vcu-ui')
+
+
+class Model(object):
+    # Singleton accessor
+    instance = None
+
+    def __init__(self):
+        super().__init__()
+
+        assert Model.instance is None
+        Model.instance = self
+
+        self.linux_release = platform.release()
+
+        self.worker = ModelWorker(self)
+        self.lock = threading.Lock()
+        self.data = dict()
+        self.data['watermark'] = dict()
+
+        self.led_ind = LED_BiColor('/sys/class/leds/ind')
+        self.led_stat = LED_BiColor('/sys/class/leds/status')
+        self.cnt = 0
+
+        self.config = configparser.ConfigParser()
+        try:
+            self.config.read(CONF_FILE)
+            self.obd2_port = self.config.get('OBD2', 'Port')
+            self.obd2_speed = int(self.config.get('OBD2', 'Speed'))
+        except configparser.Error as e:
+            self.obd2_port = None
+            self.obd2_speed = None
+            logger.warning(f'ERROR: Cannot get config from {CONF_FILE}')
+            logger.info(e)
+
+    def setup(self):
+        self.led_stat.green()
+        self.led_ind.green()
+
+        self.worker.setup()
+
+    def get_all(self):
+        with self.lock:
+            return self.data
+
+    def get(self, origin):
+        with self.lock:
+            if origin in self.data:
+                return self.data[origin]
+
+    def publish(self, origin, value):
+        """
+        Report event (with data) to data model
+
+        Safe to be called from any thread
+        """
+        # logger.debug(f'get data from {origin}')
+        # logger.debug(f'values {value}')
+        with self.lock:
+            self.data[origin] = value
+
+            if origin == 'things':
+                if value['state'] == 'sending':
+                    self.led_ind.yellow()
+                else:
+                    self.led_ind.green()
+            elif origin == 'modem':
+                if 'bearer-uptime' in value:
+                    self._watermark('bearer-uptime', value['bearer-uptime'])
+
+    def remove(self, origin):
+        with self.lock:
+            self.data.pop(origin, None)
+
+    def _watermark(self, topic, value):
+        if topic not in self.data['watermark']:
+            logger.info(f'creating watermark topic {topic}')
+            self.data['watermark'][topic] = None
+
+        curr = self.data['watermark'][topic]
+        logger.debug(f'checking watermark {topic}, current = {curr}, new = {value}')
+
+        if curr is None or value > curr:
+            self.data['watermark'][topic] = value
+            logger.debug(f'new watermark for {topic} = {value}')
+
+
+class ModelWorker(threading.Thread):
+    def __init__(self, model):
+        super().__init__()
+
+        self.model = model
+        self.modem_setup_done = False
+
+    def setup(self):
+        self.lock = threading.Lock()
+        self.daemon = True
+        self.name = 'model-worker'
+
+        if SysInfoSensors.sensors_present():
+            logger.info('using sensors based sysinfo module')
+            self.si = SysInfoSensors()
+        else:
+            logger.info('using sys-fs based sysinfo module')
+            self.si = SysInfoSysFs()
+
+        # if self.model.linux_release.startswith("4"):
+        #     self.broadr_phy = PhyInfo('broadr0')
+        # else:
+        #     self.broadr_phy = PhyInfo5('broadr0')
+
+        if self.model.obd2_port and self.model.obd2_speed:
+            self._obd2_setup(self.model.obd2_port, self.model.obd2_speed)
+
+        self._traffic_mon_setup()
+
+        self.start()
+
+    def run(self):
+        cnt = 0
+        while True:
+            self._sysinfo()
+
+            if cnt == 0 or cnt % 4 == 2:
+                self._network()
+
+            # if cnt == 0 or cnt % 4 == 3:
+            #     self._100base_t1()
+
+            if cnt == 0 or cnt % 4 == 2:
+                self._modem()
+
+            if cnt == 0 or cnt % 20 == 15:
+                self._disc()
+
+            if self.model.obd2_port:
+                # if cnt == 0 or cnt % 2 == 1:
+                self._obd2_poll()
+
+            if cnt == 0 or cnt % 20 == 12:
+                self._traffic()
+
+            cnt += 1
+            time.sleep(1.0)
+
+    def _sysinfo(self):
+        si = self.si
+        si.poll()
+
+        ver = dict()
+        ver['serial'] = si.serial()
+        ver['sys'] = si.version()
+        ver['bl'] = si.bootloader_version()
+        ver['hw'] = si.hw_version()
+        self.model.publish('sys-version', ver)
+
+        start = dict()
+        start['reason'] = si.start_reason()
+        self.model.publish('sys-boot', start)
+
+        dt = dict()
+        dt['date'] = si.date()
+        dt['uptime'] = si.uptime()
+        self.model.publish('sys-datetime', dt)
+
+        info = dict()
+        info['mem'] = si.meminfo()
+        info['load'] = si.load()
+        info['temp_mb'] = si.temperature_mb1_pcb()
+        info['temp_mb2'] = si.temperature_mb2_pcb()
+        info['temp_eth'] = si.temperature_eth_pcb()
+        info['v_in'] = si.input_voltage()
+        info['v_rtc'] = si.rtc_voltage()
+        self.model.publish('sys-misc', info)
+
+    def _disc(self):
+        si = self.si
+
+        disc = dict()
+        disc['wear'] = si.emmc_wear()
+        disc['part_sysroot'] = si.part_size('/')
+        # disc['part_data'] = si.part_size('/data')
+        self.model.publish('sys-disc', disc)
+
+    def _network(self):
+        si = self.si
+
+        info_wwan = dict()
+        info_wwan['bytes'] = si.ifinfo('wwan0')
+        self.model.publish('net-wwan0', info_wwan)
+
+        info_wlan = dict()
+        info_wlan['bytes'] = si.ifinfo('wlan0')
+        self.model.publish('net-wlan0', info_wlan)
+
+    def _modem_setup(self, m):
+        logger.info("enabling signal query")
+        if m:
+            m.setup_signal_query()
+            self.modem_setup_done = True
+        else:
+            logger.info("modem not yet ready")
+
+    def _modem(self):
+        info = dict()
+        m = MM.modem()
+        if m:
+            if not self.modem_setup_done:
+                self._modem_setup(m)
+
+            info['modem-id'] = str(m.id)
+            m_info = m.get_info()
+
+            info['vendor'] = m.vendor(m_info)
+            info['model'] = m.model(m_info)
+            info['revision'] = m.revision(m_info)
+
+            state = m.state(m_info)
+            access_tech = m.access_tech(m_info)
+            info['state'] = state
+            info['access-tech'] = access_tech
+
+            loc_info = m.location()
+            if loc_info['mcc']:
+                info['location'] = loc_info
+
+            sq = m.signal_quality(m_info)
+            info['signal-quality'] = sq
+
+            # Get access tech from signal quality command as regular RAT
+            # information from ModemManager is not reliable
+            sig_info = m.signal_get()
+
+            sig_rat = m.signal_access_tech(sig_info)
+            info['access-tech2'] = sig_rat
+
+            if sig_rat == 'lte':
+                sig = m.signal_lte(sig_info)
+                info['signal-lte'] = sig
+
+                # Seldomly the signal fields are not defined, handle gracefully
+                if sig['rsrq'] and sig['rsrp']:
+                    # Compute an alternate signal quality indicator to ModemManager
+                    lte_q = SignalQuality_LTE(sig['rsrq'], sig['rsrp'])
+                    qual = lte_q.quality() * 100.0
+                    info['signal-quality2'] = round(qual)
+
+            elif sig_rat == 'umts':
+                sig = m.signal_umts(sig_info)
+                info['signal-umts'] = sig
+
+            b = m.bearer(m_info)
+            if b:
+                b_info = b.get_info()
+
+                info['bearer-id'] = str(b.id)
+                ut = b.uptime(b_info)
+                if ut:
+                    info['bearer-uptime'] = ut
+                    ip = b.ip(b_info)
+                    info['bearer-ip'] = ip
+
+            s = m.sim(m_info)
+            if s:
+                info['sim-id'] = str(s.id)
+
+                s_info = s.get_info()
+                imsi = s.imsi(s_info)
+                info['sim-imsi'] = imsi
+                iccid = s.iccid(s_info)
+                info['sim-iccid'] = iccid
+        else:
+            self.modem_setup_done = False
+
+        self.model.publish('modem', info)
+
+    def _obd2_setup(self, port, speed):
+        logger.info(f"setting up OBD-II on port {port} at {speed} bps")
+        if speed != 250000 and speed != 500000:
+            speed = 500000
+            logger.info(f"unsupported bitrate, using {speed}")
+
+        self._obd2 = OBD2(port, speed)
+        self._obd2.setup()
+
+    def _obd2_poll(self):
+        if self._obd2:
+            info = dict()
+
+            pid = self._obd2.speed()
+            if pid:
+                info['speed'] = pid.value()
+            else:
+                info['speed'] = 0.0
+
+            pid = self._obd2.engine_coolant_temp()
+            if pid:
+                info['coolant-temp'] = pid.value()
+            else:
+                info['coolant-temp'] = 0.0
+
+            self.model.publish('obd2', info)
+
+    # def _100base_t1(self):
+    #     state = self.broadr_phy.state()
+    #     quality = self.broadr_phy.quality()
+
+    #     info = dict()
+    #     info['state'] = state
+    #     info['quality'] = str(quality)
+
+    #     self.model.publish('phy-broadr0', info)
+
+    def _traffic_mon_setup(self):
+        logger.warning('setting up traffic monitoring')
+
+        if VnStat.probe():
+            self._vnstat = VnStat('wwan0')
+            # print(f'version is {VnStat.version}')
+        else:
+            self._vnstat = None
+            logger.info('traffic monitoring disabled')
+
+    def _traffic(self):
+        if self._vnstat:
+            info = self._vnstat.get()
+            if info:
+                self.model.publish('traffic-wwan0', info)

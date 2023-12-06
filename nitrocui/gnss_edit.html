@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<head>
+    <title>NG800/VCU Pro UI</title>
+    <link type="text/css" rel="stylesheet" href="{{ static_url('styles.css') }}">
+    <link rel="shortcut icon" href="{{ static_url('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ static_url('apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ static_url('manifest.json') }}">
+</head>
+
+<body>
+    <h1 id="header">{{ title }}</h1>
+
+    <div id="xyz" style="overflow:auto">
+        <div class="menu">
+            <div class="btn-group">
+                <button class="button" onclick="window.location.href = '/'">Home</button>
+                <p></p>
+                {% if data %}
+                <button class="button button_green" onclick="window.location.href = '/gnss_edit'">Reload Config</button>
+                <button id="button_save" class="button button_green" type="button" disabled
+                    onclick="do_gnss_cfg_save()">Save Config</button>
+                <p></p>
+                <button id="button_restart" class="button button_orange" type="button"
+                    onclick="do_gnss_restart()">Restart Gnss-Mgr</button>
+                {% end %}
+            </div>
+        </div>
+
+        <div id="main" class="main">
+            {% if data %}
+            <div id="editor" hidden="hidden">
+                {% raw data %}
+            </div>
+            {% else %}
+                Configuration file not present
+            {% end %}
+            <p></p>
+
+            <!-- The Modal Dialog -->
+            <div id="myModal" class="modal">
+                <!-- Modal content -->
+                <div id="myDialog" class="modal-content">
+                    <div id="myTimerBar" class="modal-timer-bar"></div>
+                    <div class="modal-header">
+                        <span id="myCloseButton" class="close">&times;</span>
+                        <h2>Information</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p id=message></p>
+                        <pre class="terminal" id="console">
+                        <!-- room for console output -->
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <!-- TODO: Local storage -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.0/ace.js"
+        integrity="sha512-vgArOyW+sdp69qm3025hO1uoxhMZ7rzc2NZbaC/0eUD92rYIx4YSI/NdQ1+oINXb8tXoFQJyQqpfV9KxoPGuCw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script> -->
+    <script src="{{ static_url('ace/src-noconflict/ace.js') }}"></script>
+
+    <script>
+        var timer_close = null;
+        const editor = document.getElementById("editor");
+        const button_save = document.getElementById("button_save");
+        const header = document.getElementById("header");
+        const footer = document.getElementById("footer");
+
+        const darkmode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        var ace_editor = ace.edit("editor");
+        // https://ajaxorg.github.io/ace-api-docs/interfaces/Ace.EditorOptions.html
+        ace_editor.setOptions({
+            animatedScroll: true,
+            cursorStyle: "wide",
+            fontSize: "13px",
+            printMargin: false,
+            // showGutter: false,   // folding symbols
+            showLineNumbers: false,
+        });
+        ace_editor.session.setMode("ace/mode/ini");
+
+        if (darkmode) {
+            ace_editor.setTheme("ace/theme/cloud9_night");
+        } else {
+            ace_editor.setTheme("ace/theme/cloud9_day");
+        }
+        ace_editor.commands.removeCommand('showSettingsMenu');
+
+        orig_gnss_cfg = ace_editor.getValue();
+        resize_editor();
+
+        editor.removeAttribute("hidden");
+
+        window.onresize = function() {
+            console.log("resize");
+            resize_editor();
+        }
+
+        editor.onkeyup = function () {
+            // enable save button, when content is changed (and only then)
+            if (orig_gnss_cfg != ace_editor.getValue()) {
+                button_save.disabled = false;
+            }
+            else {
+                button_save.disabled = true;
+            }
+        }
+
+        function resize_editor() {
+            win_height = parseInt(window.innerHeight);
+            header_height = parseInt(header.clientHeight)
+            footer_height = parseInt(footer.clientHeight)
+            main_height = win_height - header_height - footer_height - 20;
+            console.log(main_height)
+
+            document.getElementById("main").style.height = `${main_height}px`;
+            editor.style.height = `${main_height-32}px`;
+        }
+
+        // Get the modal elements
+        var modal = document.getElementById("myModal");
+        var dialog = document.getElementById("myDialog");
+        var dialog_message = document.getElementById("message");
+        var dialog_console = document.getElementById("console");
+        var close_button = document.getElementById("myCloseButton");
+        var timer_bar = document.getElementById("myTimerBar");
+
+        // When the user clicks on <span> (x), close the modal
+        close_button.onclick = function () {
+            modal_close();
+        }
+
+        // When the user clicks in the dialog stop the auto timer
+        dialog.onclick = function () {
+            stop_close_timer();
+        }
+
+        function model_open(message) {
+            modal.style.display = "block";
+            dialog_message.innerHTML = message;
+            dialog_console.innerHTML = "";
+            dialog_console.style.display = "none";
+            timer_bar.style.display = "none";
+        }
+
+        function modal_close() {
+            stop_close_timer();
+            modal.style.display = "none";
+        }
+
+        function modal_enable_close_timer() {
+            timer_bar.style.display = "block";
+            timer_bar.setAttribute("class", "modal-timer-bar");
+        }
+
+        function start_close_timer(secs) {
+            timer_bar.setAttribute("class", "modal-timer-bar-active");
+            timer_bar.style.transition = `width ${secs}s linear`;
+            timer_close = setTimeout(timer_modal_close, secs * 1000);
+        }
+
+        function stop_close_timer() {
+            timer_bar.style.transition = "width 1s linear";
+            timer_bar.setAttribute("class", "modal-timer-bar");
+            if (timer_close != null) {
+                console.log("stopping timer");
+                clearTimeout(timer_close);
+                timer_close = null;
+            }
+        }
+
+        function timer_modal_close() {
+            console.log("timer elapsed");
+            modal_close();
+        }
+
+        /* Actions */
+
+        function do_gnss_cfg_save() {
+            res = confirm("Do you really want to save the gnss configuration?");
+            if (res) {
+                gnss_cfg = ace_editor.getValue();
+                // console.log(gnss_cfg);
+
+                query = `config=${gnss_cfg}`;
+                uri = "/do_gnss_save";
+                operate("Saving GNSS Config", uri, query);
+            }
+        }
+
+        function do_gnss_restart() {
+            res = confirm("Do you really want to restart gnss-mgr?");
+            if (res) {
+                console.log("restart gnss-mgr");
+
+                query = "";
+                uri = "/do_gnss_restart";
+                operate("Restarting GNSS Manager. Please wait.", uri, query);
+            }
+        }
+
+        /* Helper method for basic dialog/request/response sequence */
+        function operate(title, uri, query) {
+            model_open(title);
+            modal_enable_close_timer();
+
+            const xhttp = new XMLHttpRequest();
+
+            xhttp.open("POST", uri, true);
+            xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+
+            xhttp.onreadystatechange = function () {
+                if (this.readyState === XMLHttpRequest.DONE && this.status == 200) {
+                    dialog_message.innerHTML += "<br>" + this.responseText;
+                    start_close_timer(3);
+                }
+            };
+
+            xhttp.send(encodeURI(query));
+        }
+    </script>
+</body>
+
+</html>

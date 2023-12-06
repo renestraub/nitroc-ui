@@ -1,0 +1,395 @@
+body {
+    background-color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    color: black;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+      background-color: #222;
+      color: #e4e4e4;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.menu {
+    float: left;
+    width: 25%;
+    text-align: center;
+}
+
+.main {
+    float: left;
+    width: 75%;
+    padding: 0 10px;
+}
+
+.footer {
+    position: fixed;
+    left: 0px;
+    bottom: 0;
+    z-index: 2;
+    width: 100%;
+    background-color: lightgray;
+    text-align: center;
+    font-size: 60%;
+}
+
+@media (prefers-color-scheme: dark) {
+    .footer {
+        background-color: #444;
+/*        color: #666;*/
+    }
+}
+
+@media only screen and (max-width:620px) {
+    /* For mobile phones: */
+    .menu,
+    .main {
+        width: 100%;
+    }
+    table {
+        font-size: 80%;
+    }
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+td {
+    overflow: hidden;
+    vertical-align: top;
+    border: 1px solid rgb(0, 48, 84);
+    padding: 3px;
+    padding-left: 6px;
+}
+
+.td_notyet {
+    font-style: italic;
+    color: #222;
+}
+
+.td_medium {
+    font-size: 200%;
+    font-weight: bold;
+}
+
+.td_large {
+    font-size: 250%;
+    font-weight: bold;
+}
+
+.td_xlarge {
+    font-size: 600%;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:nth-child(odd) {
+    background-color: #d1f5f7;
+}
+
+@media (prefers-color-scheme: dark) {
+    td {
+        border: 1px solid #000000;
+    }
+
+    tr:nth-child(even) {
+        background-color: #4d4d4d;
+    }
+    
+    tr:nth-child(odd) {
+        background-color: #3a3a3a;
+    }
+}
+
+.btn-group {
+    padding-left: 5px;
+    /*padding-right: 5px;*/
+    cursor: pointer;
+    /* Make the buttons appear below each other */
+    display: block;
+}
+
+button {
+    background-color: #008CBA;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    padding: 12px 0px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 100%;
+    width: 100%;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    -webkit-transition-duration: 0.4s;
+    transition-duration: 0.4s;
+}
+
+.button:disabled {
+    opacity: 33%;
+}
+
+.button_slider {
+    width: calc(100% - 70px);
+}
+
+.button_orange {
+    background-color: #eb7f2c;
+}
+
+.button_red {
+    background-color: #eb3f2c;
+}
+
+.button_green {
+    background-color: #4CAF50;
+}
+
+.button:hover {
+    background-color: rgb(175, 175, 76);
+    color: white;
+}
+
+
+input {
+    font-size: 90%;
+    padding: 4px 6px;
+    border: 2px solid rgb(228, 228, 228);
+    border-radius: 4px;
+}
+
+.input_vrp {
+    width: 80px;
+}
+
+select {
+    font-size: 90%;
+    padding: 4px 6px;
+    border: 2px solid rgb(228, 228, 228);
+    border-radius: 4px;
+}
+
+
+/* The Modal (background) */
+
+.modal {
+    /* Hidden by default */
+    display: none;
+    /* Stay in place */
+    position: fixed;
+    /* Sit on top */
+    z-index: 100;
+    /* Location of the box */
+    padding-top: 50px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    /* Enable scroll if needed */
+    overflow: auto;
+    /* Fallback color */
+    background-color: rgb(0, 0, 0);
+    /* Black w/ opacity */
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+
+/* Modal Dialog */
+
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0;
+    border: 1px solid #888;
+    max-width: 700px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 1.0s;
+    animation-name: animatetop;
+    animation-duration: 1.0s
+}
+
+@media (prefers-color-scheme: dark) {
+    .modal-content {
+        background-color: #222;
+    }
+}
+
+@-webkit-keyframes animatetop {
+    from {
+        top: -300px;
+        opacity: 0
+    }
+    to {
+        top: 0;
+        opacity: 1
+    }
+}
+
+@keyframes animatetop {
+    from {
+        top: -300px;
+        opacity: 0
+    }
+    to {
+        top: 0;
+        opacity: 1
+    }
+}
+
+.modal-header {
+    padding: 2px 16px;
+    background-color: #008CBA;
+    color: white;
+}
+
+.modal-body {
+    padding-left: 10px;
+    padding-right: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.terminal {
+    background-color: #000000;
+    width: 100%;
+    min-width: 480px;
+    /* max-height: 400px; */
+    padding: 6px;
+    color: #eeeeee;
+    font-size: 80%;
+    font-family: monospace;
+}
+
+
+/* The Close Button */
+
+.close {
+    color: white;
+    float: right;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+/* The Timer Bar showing when dialog closes */
+
+.modal-timer-bar {
+    width: 100%;
+    height: 6px;
+    background-color: blue;
+    transition: width 1s;
+}
+
+.modal-timer-bar-active {
+    width: 0px;
+    height: 6px;
+    background-color: blue;
+}
+
+
+
+ /* The switch - the box around the slider */
+ .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    padding: 6px 0px;
+  }
+  
+  /* Hide default HTML checkbox */
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  /* The slider */
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  input:checked + .slider {
+    background-color: #2196F3;
+  }
+  
+  input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+  
+  input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+  }
+  
+  /* Rounded sliders */
+  .slider.round {
+    border-radius: 4px;
+  }
+  
+  .slider.round:before {
+    border-radius: 2px;
+  } 
+  
+.dot-animated {
+  font-size: 120%;
+  color: darkgreen;
+  transition: color 0.35s ease;
+}
+
+.img_traffic {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.editor {
+    background-color: inherit;
+    color: inherit;
+    width: 100%;
+    min-width: 480px;
+    min-height: 400px;
+    padding: 8px;
+    font-family: monospace;
+}

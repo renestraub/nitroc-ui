@@ -1,0 +1,2 @@
+recursive-include nitrocui *.html
+recursive-include nitrocui/static *.css *.ico *.png *.json *.js

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<head>
+    <title>NG800/VCU Pro UI</title>
+    <link type="text/css" rel="stylesheet" href="{{ static_url('styles.css') }}">
+    <link rel="shortcut icon" href="{{ static_url('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ static_url('apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ static_url('manifest.json') }}">
+</head>
+
+<body>
+    <h1>{{ title }}</h1>
+
+    <div style="overflow:auto">
+        <div class="menu">
+            <div class="btn-group">
+                <button class="button" onclick="window.location.href = '/'">Home</button>
+                <p></p>
+<!--
+                <button id="button_ser2net" class="button button_orange" type="button" onclick="do_sertonet()">uCenter ser2net</button>
+                <p></p>
+-->
+                {% if data %}
+                <button id="button_state_save" class="button button_green" type="button" onclick="do_state_save()">Save GNSS State</button>
+                <button id="button_state_clear" class="button button_green" type="button" onclick="do_state_clear()">Clear GNSS State</button>
+                <p></p>
+                <button id="button_settings_save" class="button button_orange" type="button" onclick="do_factory_reset()">Factory Reset Settings</button>
+                <button id="button_col_start" class="button button_orange" type="button" onClick="do_gnss_coldstart()">Cold Start</button>
+                {% end %}
+                <p></p>
+                <button class="button" onclick="window.location.href = '/gnss'">Refresh Page</button>
+            </div>
+        </div>
+
+        <div class="main">
+            <table>
+            {% if table %}
+                {% for entry in table %}
+                <tr>
+                    <td>{% raw entry.header %}</td>
+                    <td>{% raw entry.text %}</td>
+                </tr>
+                {% end %}
+            {% end %}
+            <tr></tr><td></td><td></td>
+            {% if data %}
+                <tr>
+                    <td>UART</td>
+                    <td>{{ data['uart_settings'] }}</td>
+                </tr>
+                <tr>
+                    <td>NMEA Protocol</td>
+                    <td>{{ data['nmea_protocol'] }}</td>
+                </tr>
+                <tr>
+                    <td>IMU Auto Alignment</td>
+                    <td id="auto_imu_align_state">{{ data['imu_auto_align_state'] }}</td>
+                </tr>
+                <tr>
+                    <td>Mounting</td>
+                    <td>{{ data['imu_angles'] }}</td>
+                </tr>
+                <tr>
+                    <td>ESF Status</td>
+                    <td>{{ data['esf_status'] }}</td>
+                </tr>
+                <tr>
+                    <td>Dynamic Model</td>
+                    <td>
+                        <select id="dyn_model">
+                            <option value="0">0: Portable</option>
+                            <option value="2">2: Stationary</option>
+                            <option value="3">3: Pedestrian</option>
+                            <option value="4">4: Automotive</option>
+                            <option value="5">5: Sea</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Automatic Alignment</td>
+                    <td>
+                        <select id="auto_imu_align">
+                            <option value="On">On</option>
+                            <option value="Off">Off</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Mounting</td>
+                    <td>
+                        Yaw [0, 360]: <input type="number" id="imu_cfg_yaw" class="input_vrp" min="0" max="360" step="1">
+                        Pitch [-90, 90]: <input type="number" id="imu_cfg_pitch" class="input_vrp" min="-90" max="90" step="1"}>
+                        Roll [-180, 180]: <input type="number" id="imu_cfg_roll" class="input_vrp" min="-180" max="180" step="1">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>VRP-Antenna</td>
+                    <td>
+                        X [-200..1000 cm]: <input type="number" id="vrp-ant-x" class="input_vrp" min="-200" max="1000" step="1">
+                        Y [-200..200 cm]: <input type="number" id="vrp-ant-y" class="input_vrp" min="-200" max="200" step="1">
+                        Z [-100..400 cm]: <input type="number" id="vrp-ant-z" class="input_vrp" min="-100" max="400" step="1">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>VRP-IMU</td>
+                    <td>
+                        X [-200..1000 cm]: <input type="number" id="vrp-imu-x" class="input_vrp" min="-200" max="1000" step="1">
+                        Y [-200..200 cm]: <input type="number" id="vrp-imu-y" class="input_vrp" min="-200" max="200" step="1">
+                        Z [-100..400 cm]: <input type="number" id="vrp-imu-z" class="input_vrp" min="-100" max="400" step="1">
+                    </td>
+                </tr>
+            </table>
+            {% end %}
+
+            {% if message %}
+            <p>Status: {{message}}</p>
+            {% end %}
+
+            <br><br>
+
+            <!-- The Modal Dialog -->
+            <div id="myModal" class="modal">
+                <!-- Modal content -->
+                <div id="myDialog" class="modal-content">
+                    <div id="myTimerBar" class="modal-timer-bar"></div>
+                    <div class="modal-header">
+                        <span id="myCloseButton" class="close">&times;</span>
+                        <h2>Information</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p id=message></p>
+                        <pre class="terminal" id="console">
+                        <!-- room for console output -->
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+        // data provided to web page
+        {% if data %}
+            {% for key, value in data.items() %}
+                localStorage.{{key}} = '{{value}}';
+            {% end %}
+
+            // Set UI configuration items with values provided by system
+            // console.log(`system dyn_model is {{data['dyn_model']}}`)
+            // console.log(`system nmea is {{data['nmea_protocol']}}`)
+            document.getElementById("dyn_model").value = "{{data['dyn_model']}}";
+            document.getElementById("auto_imu_align").value = "{{data['imu_auto_align']}}";
+
+            document.getElementById("imu_cfg_roll").value = "{{data['imu_cfg_roll']}}";
+            document.getElementById("imu_cfg_pitch").value = "{{data['imu_cfg_pitch']}}";
+            document.getElementById("imu_cfg_yaw").value = "{{data['imu_cfg_yaw']}}";
+
+            document.getElementById("vrp-ant-x").value = "{{data['vrp_ant_x']}}";
+            document.getElementById("vrp-ant-y").value = "{{data['vrp_ant_y']}}";
+            document.getElementById("vrp-ant-z").value = "{{data['vrp_ant_z']}}";
+
+            document.getElementById("vrp-imu-x").value = "{{data['vrp_imu_x']}}";
+            document.getElementById("vrp-imu-y").value = "{{data['vrp_imu_y']}}";
+            document.getElementById("vrp-imu-z").value = "{{data['vrp_imu_z']}}";
+        {% end %}
+
+        var timer_close = null;
+
+        // Get the modal elements
+        var modal = document.getElementById("myModal");
+        var dialog = document.getElementById("myDialog");
+        var dialog_message = document.getElementById("message");
+        var dialog_console = document.getElementById("console");
+        var close_button = document.getElementById("myCloseButton");
+        var timer_bar = document.getElementById("myTimerBar");
+        
+        // When the user clicks on <span> (x), close the modal
+        close_button.onclick = function() {
+            modal_close();
+        }
+
+        // When the user clicks in the dialog stop the auto timer
+        dialog.onclick = function() {
+            stop_close_timer();
+        }
+
+        function model_open(message) {
+            modal.style.display = "block";
+            dialog_message.innerHTML = message;
+            dialog_console.innerHTML = "";
+            dialog_console.style.display = "none";
+            timer_bar.style.display = "none";
+        }
+
+        function modal_close() {
+            stop_close_timer();
+            modal.style.display = "none";
+
+            // check if this is safe
+            // location.reload();
+        }
+
+        function modal_enable_close_timer() {
+            timer_bar.style.display = "block";
+            timer_bar.setAttribute("class", "modal-timer-bar");
+        }
+
+        function start_close_timer(secs) {
+            timer_bar.setAttribute("class", "modal-timer-bar-active");
+            timer_bar.style.transition = `width ${secs}s linear`;
+            timer_close = setTimeout(timer_modal_close, secs*1000);
+        }
+
+        function stop_close_timer() {
+            timer_bar.style.transition = "width 1s linear";
+            timer_bar.setAttribute("class", "modal-timer-bar");
+            if (timer_close != null) {
+                console.log("stopping timer");
+                clearTimeout(timer_close);
+                timer_close = null;
+            }
+        }
+
+        function timer_modal_close() {
+            console.log("timer elapsed");
+            modal_close();
+        }
+
+        /* Actions */
+
+        function do_sertonet() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    dialog_message.innerHTML += "<br>" + this.responseText;
+                    start_close_timer(3);
+                }
+            };
+
+            model_open('Setting up system for uCenter connection');
+            modal_enable_close_timer();
+
+            xhttp.open("GET", "do_ser2net", true);
+            xhttp.send();
+        }
+
+        function do_factory_reset() {
+            operate("Performing factory reset", "do_gnss_factory_reset");
+        }
+
+        function do_state_save() {
+            operate("Saving GNSS State", "do_gnss_state_save");
+        }
+
+        function do_state_clear() {
+            operate("Clearing GNSS State", "do_gnss_state_clear");
+        }
+
+        function do_gnss_coldstart() {
+            operate("Performing GNSS coldstart", "do_gnss_coldstart");
+        }
+
+        /* Helper method for basic dialog/request/response sequence */
+        function operate(title, uri) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    dialog_message.innerHTML += "<br>" + this.responseText;
+                    start_close_timer(3);
+                }
+            };
+
+            model_open(title);
+            modal_enable_close_timer();
+
+            xhttp.open("GET", uri, true);
+            xhttp.send();
+        }
+    </script>
+</body>
+
+</html>
