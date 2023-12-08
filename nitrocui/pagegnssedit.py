@@ -6,8 +6,8 @@ import subprocess
 
 import tornado.web
 
-from nitrocui._version import __version__ as version
-from nitrocui.data_model import Model
+from ._version import __version__ as version
+from .data_model import Model
 
 
 CONFIG_FILE = '/etc/gnss/gnss0.conf'

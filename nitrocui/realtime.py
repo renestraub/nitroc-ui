@@ -8,8 +8,8 @@ import logging
 
 import tornado.web
 
-from nitrocui._version import __version__ as version
-from nitrocui.data_model import Model
+from ._version import __version__ as version
+from .data_model import Model
 
 logger = logging.getLogger('nitroc-ui')
 

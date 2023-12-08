@@ -12,7 +12,7 @@ import struct
 import time
 import logging
 
-from nitrocui.timeout import Timeout
+from .timeout import Timeout
 
 
 RX_TIMEOUT = 1.0

@@ -14,20 +14,20 @@ import tornado.ioloop
 import tornado.web
 import tornado.websocket
 
-from nitrocui._version import __version__ as version
-from nitrocui.data_model import Model
-from nitrocui.wwan_model import Wwan
-# from nitrocui.gnss_model import Gnss
-# from nitrocui.gnss_pos import GnssPosition
-from nitrocui.mm import MM
-from nitrocui.pagegnss import GnssHandler, GnssSaveStateHandler, GnssClearStateHandler
-from nitrocui.pagegnss import GnssFactoryResetHandler, GnssColdStartHandler
+from ._version import __version__ as version
+from .data_model import Model
+from .wwan_model import Wwan
+# from .gnss_model import Gnss
+# from .gnss_pos import GnssPosition
+from .mm import MM
+from .pagegnss import GnssHandler, GnssSaveStateHandler, GnssClearStateHandler
+from .pagegnss import GnssFactoryResetHandler, GnssColdStartHandler
 
-from nitrocui.pagegnssedit import GnssEditHandler, GnssSaveHandler, GnssRestartHandler
-from nitrocui.realtime import RealtimeHandler, RealtimeWebSocket
-from nitrocui.pageinfo import MainHandler
-from nitrocui.pagetraffic import TrafficHandler, TrafficImageHandler
-from nitrocui.things import Things
+from .pagegnssedit import GnssEditHandler, GnssSaveHandler, GnssRestartHandler
+from .realtime import RealtimeHandler, RealtimeWebSocket
+from .pageinfo import MainHandler
+from .pagetraffic import TrafficHandler, TrafficImageHandler
+from .things import Things
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(module)-12s %(message)s'

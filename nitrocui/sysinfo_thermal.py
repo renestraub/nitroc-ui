@@ -1,6 +1,6 @@
 from os import path
 
-from nitrocui.sysinfo_base import SysInfoBase
+from .sysinfo_base import SysInfoBase
 
 
 class SysInfoThermal(SysInfoBase):

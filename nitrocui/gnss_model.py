@@ -16,7 +16,7 @@ from ubxlib.ubx_esf_alg import UbxEsfAlgPoll
 from ubxlib.ubx_esf_status import UbxEsfStatusPoll
 from ubxlib.ubx_mon_ver import UbxMonVerPoll
 from ubxlib.ubx_upd_sos import UbxUpdSosAction
-from nitrocui.gpsd import Gpsd
+from .gpsd import Gpsd
 
 logger = logging.getLogger('nitroc-ui')
 

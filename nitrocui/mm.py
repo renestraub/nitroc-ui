@@ -198,9 +198,9 @@ class Modem():
 
     def signal_5g(self, mmr):
         res = dict()
-        res['rsrp'] = mmr.number('modem.signal.lte.rsrp')
-        res['rsrq'] = mmr.number('modem.signal.lte.rsrq')
-        snr = mmr.number('modem.signal.lte.snr')
+        res['rsrp'] = mmr.number('modem.signal.5g.rsrp')
+        res['rsrq'] = mmr.number('modem.signal.5g.rsrq')
+        snr = mmr.number('modem.signal.5g.snr')
         if snr:
             res['snr'] = snr
 

@@ -2,7 +2,7 @@ import logging
 import threading
 import time
 
-from nitrocui.gpsd import Gpsd
+from .gpsd import Gpsd
 
 logger = logging.getLogger('nitroc-ui')
 

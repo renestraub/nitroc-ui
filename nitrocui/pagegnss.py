@@ -5,9 +5,9 @@ import logging
 
 import tornado.web
 
-from nitrocui._version import __version__ as version
-from nitrocui.data_model import Model
-# from nitrocui.gnss_model import Gnss
+from ._version import __version__ as version
+from .data_model import Model
+# from .gnss_model import Gnss
 
 logger = logging.getLogger('nitroc-ui')
 

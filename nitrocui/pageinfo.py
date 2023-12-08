@@ -5,9 +5,9 @@ import logging
 
 import tornado.web
 
-from nitrocui._version import __version__ as version
-from nitrocui.data_model import Model
-from nitrocui.tools import secs_to_hhmm
+from ._version import __version__ as version
+from .data_model import Model
+from .tools import secs_to_hhmm
 
 logger = logging.getLogger('nitroc-ui')
 
@@ -248,13 +248,15 @@ class MainHandler(tornado.web.RequestHandler):
                 tes.append(TE('Signal', sq_str))
 
                 # Raw signal quality information
+                print(mi)
                 if 'signal-5g' in mi:
+                    sig = mi['signal-5g']
                     text = nice([('rsrp', 'RSRP', 'dBm'),
                                 ('rsrq', 'RSRQ', 'dB'),
                                 ('snr', 'S/N', 'dB')],
                                 sig, True)
                     tes.append(TE('Signal 5G', text))
-                elif 'signal-lte' in mi:
+                if 'signal-lte' in mi:
                     sig = mi['signal-lte']
                     if 'rssi' in sig and 'snr' in sig:
                         text = nice([('rsrp', 'RSRP', 'dBm'),
@@ -267,7 +269,7 @@ class MainHandler(tornado.web.RequestHandler):
                                     ('rsrq', 'RSRQ', 'dB')],
                                     sig, True)
                     tes.append(TE('Signal LTE', text))
-                elif 'signal-umts' in mi:
+                if 'signal-umts' in mi:
                     sig = mi['signal-umts']
                     text = nice([('rscp', 'RSCP', 'dBm'),
                                 ('ecio', 'ECIO', 'dB')],

@@ -18,15 +18,15 @@ import platform
 import threading
 import time
 
-from nitrocui.led import LED_BiColor
-from nitrocui.mm import MM
-# from nitrocui.obd_client import OBD2
-from nitrocui.phy_info import PhyInfo, PhyInfo5
+from .led import LED_BiColor
+from .mm import MM
+# from .obd_client import OBD2
+# from .phy_info import PhyInfo, PhyInfo5
 # from nitrocui.sig_quality import SignalQuality_LTE
-from nitrocui.sysinfo_thermal import SysInfoThermal
-from nitrocui.sysinfo_sensors import SysInfoSensors
-from nitrocui.sysinfo_power import SysInfoPower
-from nitrocui.vnstat import VnStat
+from .sysinfo_thermal import SysInfoThermal
+from .sysinfo_sensors import SysInfoSensors
+from .sysinfo_power import SysInfoPower
+from .vnstat import VnStat
 
 
 CONF_FILE = '/etc/nitrocui.conf'
@@ -290,14 +290,16 @@ class ModelWorker(threading.Thread):
             # information from ModemManager is not reliable
             sig_info = m.signal_get()
 
-            sig_rat = m.access_tech(sig_info)
-            sig_rat2 = m.access_tech2(sig_info)
+            # sig_rat = m.access_tech(sig_info)
+            # sig_rat2 = m.access_tech2(sig_info)
+            # print(sig_rat, sig_rat2)
 
-            if sig_rat2 == '5gnr':
+            # FN990 reports LTE and 5G as 2nd technology
+            if access_tech == '5gnr' or access_tech2 == '5gnr':
                 sig = m.signal_5g(sig_info)
                 info['signal-5g'] = sig
 
-            elif sig_rat == 'lte':
+            if access_tech == 'lte':
                 sig = m.signal_lte(sig_info)
                 info['signal-lte'] = sig
 
@@ -308,7 +310,7 @@ class ModelWorker(threading.Thread):
                 #     qual = lte_q.quality() * 100.0
                 #     info['signal-quality2'] = round(qual)
 
-            elif sig_rat == 'umts':
+            if access_tech == 'umts':
                 sig = m.signal_umts(sig_info)
                 info['signal-umts'] = sig
 

@@ -17,8 +17,8 @@ from io import BytesIO
 
 import pycurl
 
-from nitrocui.transmit_queue import TransmitQueue
-from nitrocui._version import __version__ as ui_version
+from .transmit_queue import TransmitQueue
+from ._version import __version__ as ui_version
 
 logger = logging.getLogger('nitroc-ui')
 
