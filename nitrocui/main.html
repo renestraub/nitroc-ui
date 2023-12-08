@@ -83,22 +83,11 @@
 
     <script>
         // data provided to web page
-        { %
-            if data %
-        } { %
-            for key, value in data.items() %
-        }
-        localStorage. {
-            {
-                key
-            }
-        } = {
-            {
-                value
-            }
-        }; { % end %
-        } { % end %
-        }
+        {% if data %}
+            {% for key, value in data.items() %}
+                localStorage.{{key}} = {{value}};
+            {% end %}
+        {% end %}
 
         var timer_close = null;
         var timer_refresh = null;
