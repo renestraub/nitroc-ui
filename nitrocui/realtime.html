@@ -30,18 +30,14 @@
                     <td>Speed</td>
                     <td class="td_xlarge" id="gnss-speed"></td>
                 </tr>
-                <!-- <tr>
+                <tr>
                     <td>Navigation</td>
                     <td class="td_large" id="gnss-fix"></td>
-                </tr> -->
+                </tr>
                 <tr>
                     <td>Mobile</td>
                     <td class="td_medium" id="wwan-data"></td>
                 </tr>
-                <!-- <tr>
-                    <td>OBD II</td>
-                    <td class="td_medium" id="obd2"></td>
-                </tr> -->
             </table>
         </div>
     </div>
@@ -68,28 +64,16 @@
 
             document.getElementById("counter").innerHTML = `WebSocket Clients/Counter: ${clients}/${counter}`;
 
-            speed_kmh = 0;
-            // speed_kmh = (msg.pos.speed * 3.6).toFixed(0);
-            // pdop_str = (msg.pos.pdop).toFixed(1);
-            // if (msg.esf.fusion == 'init') {
-            //     msg.esf.fusion = 'Init'
-            // } else if (msg.esf.fusion == 'fusion') {
-            //     msg.esf.fusion = 'Fus.'
-            // }
-            // let gnss_info = `${msg.pos.fix} ${msg.esf.fusion} ${pdop_str}`;
+            speed_kmh = (msg.pos.speed * 3.6).toFixed(0);
+            pdop_str = (msg.pos.pdop).toFixed(1);
+
+            let gnss_info = `${msg.pos.fix} ${pdop_str}`;
             let wwan_rat = msg.wwan0.rat.toUpperCase();
-            // let wwan_info = `${wwan_rat}: ${msg.wwan0.signal}% (${msg.wwan0.signal_ext}%)<br>Delay: ${msg.wwan0.latency} ms<br>Rx: ${msg.wwan0.rx}<br>Tx: ${msg.wwan0.tx}`;
             let wwan_info = `${wwan_rat}: ${msg.wwan0.signal}%<br>Delay: ${msg.wwan0.latency} ms<br>Rx: ${msg.wwan0.rx}<br>Tx: ${msg.wwan0.tx}`;
 
-            // obd2_speed_kmh = msg.obd2["speed"].toFixed(0);
-            // obd2_coolant_temp_degC = msg.obd2["coolant-temp"].toFixed(0);
-            // let obd2_info = `${obd2_speed_kmh} km/h, ${obd2_coolant_temp_degC} °C`;
-
             document.getElementById("gnss-speed").innerHTML = `${speed_kmh}`;
-            // document.getElementById("gnss-speed").innerHTML = `${speed_kmh} <font size=\"85%\">${obd2_speed_kmh}`
-            // document.getElementById("gnss-fix").innerHTML = gnss_info;
+            document.getElementById("gnss-fix").innerHTML = gnss_info;
             document.getElementById("wwan-data").innerHTML = wwan_info;
-            // document.getElementById("obd2").innerHTML = obd2_info;
         }
     </script>
 </body>

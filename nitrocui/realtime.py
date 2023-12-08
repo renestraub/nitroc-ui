@@ -57,7 +57,6 @@ class RealtimeWebSocket(tornado.websocket.WebSocketHandler):
     def timer():
         m = Model.instance
         md = m.get_all()
-        # gnss = Gnss.instance
 
         rx, tx = RealtimeWebSocket.safeget((None, None), md, 'net-wwan0', 'bytes')
         if not (rx and tx):
@@ -65,7 +64,6 @@ class RealtimeWebSocket(tornado.websocket.WebSocketHandler):
             tx = 0
         delay_in_ms = RealtimeWebSocket.safeget(0, md, 'link', 'delay') * 1000.0
         sq = RealtimeWebSocket.safeget((0), md, 'modem', 'signal-quality')
-        # sq_ext = RealtimeWebSocket.safeget((0), md, 'modem', 'signal-quality2')
         rat = RealtimeWebSocket.safeget('n/a', md, 'modem', 'access-tech')
         rat2 = RealtimeWebSocket.safeget('n/a', md, 'modem', 'access-tech2')
         if not rat and not rat2:
@@ -82,22 +80,20 @@ class RealtimeWebSocket(tornado.websocket.WebSocketHandler):
         }
 
         default = {'fix': '-', 'lon': 0.0, 'lat': 0.0, 'speed': 0.0, 'pdop': 99.99}
-        # pos = RealtimeWebSocket.safeget(default, md, 'gnss-pos')
+        pos = RealtimeWebSocket.safeget(default, md, 'gnss-pos')
 
         # default_esf = {'esf-status': {'fusion': 'n/a', 'ins': 'n/a', 'imu': 'n/a', 'imu-align': 'n/a'}}
         # gnss_state = RealtimeWebSocket.safeget(default_esf, md, 'gnss-state')
         # esf_state = gnss_state['esf-status']
 
         default = {'speed': 0.0, 'coolant-temp': 0.0}
-        # obd2 = RealtimeWebSocket.safeget(default, md, 'obd2')
 
         info = {
             'clients': len(RealtimeWebSocket.connections),
             'time': RealtimeWebSocket.counter,
-            # 'pos': pos,
+            'pos': pos,
             # 'esf': esf_state,
             'wwan0': wwan0,
-            # 'obd2': obd2,
         }
         [client.write_message(info) for client in RealtimeWebSocket.connections]
 

@@ -302,8 +302,8 @@ class ThingsDataCollector(threading.Thread):
                     self._traffic(md)
 
                 # Force GNSS update once a minute, even if not moving
-                # force_update = (cnt % 60) == 0
-                # self._gnss(md, force_update)
+                force_update = (cnt % 60) == 0
+                self._gnss(md, force_update)
 
                 # OBD2 information every second, force update even when no change
                 # force_update = (cnt % 60) == 0
@@ -472,32 +472,32 @@ class ThingsDataCollector(threading.Thread):
         if len(telemetry) > 0:
             self._data_queue.add(telemetry)
 
-    # def _gnss(self, md, force):
-    #     if 'gnss-pos' in md:
-    #         pos = md['gnss-pos']
-    #         if 'lon' in pos and 'lat' in pos:
-    #             lon_rad = math.radians(pos['lon'])
-    #             lat_rad = math.radians(pos['lat'])
+    def _gnss(self, md, force):
+        if 'gnss-pos' in md:
+            pos = md['gnss-pos']
+            if 'lon' in pos and 'lat' in pos:
+                lon_rad = math.radians(pos['lon'])
+                lat_rad = math.radians(pos['lat'])
 
-    #             d = self._distance(lon_rad, lat_rad)
-    #             if force or d > self.GNSS_UPDATE_DISTANCE:
-    #                 self._data_queue.add(pos)
+                d = self._distance(lon_rad, lat_rad)
+                if force or d > self.GNSS_UPDATE_DISTANCE:
+                    self._data_queue.add(pos)
 
-    #                 self.lat_last_rad = lat_rad
-    #                 self.lon_last_rad = lon_rad
+                    self.lat_last_rad = lat_rad
+                    self.lon_last_rad = lon_rad
 
-    # def _distance(self, lon_rad, lat_rad):
-    #     R = 6371.0e3
-    #     d_lat_rad = self.lat_last_rad - lat_rad
-    #     d_lon_rad = self.lon_last_rad - lon_rad
+    def _distance(self, lon_rad, lat_rad):
+        R = 6371.0e3
+        d_lat_rad = self.lat_last_rad - lat_rad
+        d_lon_rad = self.lon_last_rad - lon_rad
 
-    #     a = math.sin(d_lat_rad / 2) * math.sin(d_lat_rad / 2) + \
-    #         math.cos(lat_rad) * math.cos(self.lat_last_rad) * \
-    #         math.sin(d_lon_rad / 2) * math.sin(d_lon_rad / 2)
-    #     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
-    #     d = R * c
+        a = math.sin(d_lat_rad / 2) * math.sin(d_lat_rad / 2) + \
+            math.cos(lat_rad) * math.cos(self.lat_last_rad) * \
+            math.sin(d_lon_rad / 2) * math.sin(d_lon_rad / 2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+        d = R * c
 
-    #     return d
+        return d
 
     # def _obd2(self, md, force):
     #     if 'obd2' in md:
