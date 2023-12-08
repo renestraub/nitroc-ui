@@ -93,6 +93,11 @@ class SysInfoBase():
             info = res.split()
             return info[0:3]
 
+    def cpufreq(self, core):
+        with open(f'/sys/bus/cpu/devices/cpu{core}/cpufreq/scaling_cur_freq') as f:
+            res = f.readline()
+            return int(res)
+
     def date(self):
         cp = subprocess.run(['/usr/bin/date'], stdout=subprocess.PIPE)
         res = cp.stdout.decode().strip()

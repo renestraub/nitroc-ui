@@ -25,7 +25,9 @@ from nitrocui.phy_info import PhyInfo, PhyInfo5
 # from nitrocui.sig_quality import SignalQuality_LTE
 from nitrocui.sysinfo_thermal import SysInfoThermal
 from nitrocui.sysinfo_sensors import SysInfoSensors
+from nitrocui.sysinfo_power import SysInfoPower
 from nitrocui.vnstat import VnStat
+
 
 CONF_FILE = '/etc/nitrocui.conf'
 
@@ -131,21 +133,7 @@ class ModelWorker(threading.Thread):
 
         self.si = SysInfoSensors()
         self.sit = SysInfoThermal()
-
-        # if SysInfoSensors.sensors_present():
-        #     logger.info('using sensors based sysinfo module')
-        #     self.si = SysInfoSensors()
-        # else:
-        #     logger.info('using sys-fs based sysinfo module')
-        #     self.si = SysInfoSysFs()
-
-        # if self.model.linux_release.startswith("4"):
-        #     self.broadr_phy = PhyInfo('broadr0')
-        # else:
-        #     self.broadr_phy = PhyInfo5('broadr0')
-
-        # if self.model.obd2_port and self.model.obd2_speed:
-        #     self._obd2_setup(self.model.obd2_port, self.model.obd2_speed)
+        self.sip = SysInfoPower()
 
         self._traffic_mon_setup()
 
@@ -181,8 +169,12 @@ class ModelWorker(threading.Thread):
     def _sysinfo(self):
         si = self.si
         sit = self.sit
+        sip = self.sip
 
+        # Give each sensor subsystem a chance to efficiently get all required data at once
         si.poll()
+        sit.poll()
+        sip.poll()
 
         ver = dict()
         ver['serial'] = si.serial()
@@ -203,6 +195,11 @@ class ModelWorker(threading.Thread):
         info = dict()
         info['mem'] = si.meminfo()
         info['load'] = si.load()
+        info['cpu1_freq'] = si.cpufreq(0)
+        info['cpu2_freq'] = si.cpufreq(1)
+        info['cpu3_freq'] = si.cpufreq(2)
+        info['cpu4_freq'] = si.cpufreq(3)
+
         info['temp_mb'] = si.temperature_mb1_pcb()
         info['temp_mb2'] = si.temperature_mb2_pcb()
         info['temp_eth'] = si.temperature_eth_pcb()
@@ -218,6 +215,13 @@ class ModelWorker(threading.Thread):
         info['temp_cp0'] = sit.temp_cp0()
         info['temp_cp2'] = sit.temp_cp2()
         # print(info['temp_ap'], info['temp_cp0'], info['temp_cp2'])
+
+        info['pwr_mb'] = sip.pwr_mb()
+        info['pwr_eth'] = sip.pwr_eth()
+        info['pwr_nmcf1'] = sip.pwr_nmcf1()
+        info['pwr_nmcf2'] = sip.pwr_nmcf2()
+        info['pwr_nmcf3'] = sip.pwr_nmcf3()
+        info['pwr_nmcf4'] = sip.pwr_nmcf4()
 
         info['v_in'] = si.input_voltage()
         info['v_rtc'] = si.rtc_voltage()

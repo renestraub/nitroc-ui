@@ -1,6 +1,5 @@
 import re
 import subprocess
-from array import array
 from os import path
 
 from nitrocui.sysinfo_base import SysInfoBase

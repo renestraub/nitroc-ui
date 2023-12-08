@@ -360,6 +360,11 @@ class ThingsDataCollector(threading.Thread):
         if 'sys-misc' in md:
             info = md['sys-misc']
             telemetry['cpu-load'] = info['load'][0]
+            telemetry['cpu1-freq'] = info['cpu1_freq']
+            telemetry['cpu2-freq'] = info['cpu2_freq']
+            telemetry['cpu3-freq'] = info['cpu3_freq']
+            telemetry['cpu4-freq'] = info['cpu4_freq']
+
             telemetry['voltage-in'] = info['v_in']
             telemetry['mem-free'] = info['mem'][1]
 
@@ -378,10 +383,22 @@ class ThingsDataCollector(threading.Thread):
             telemetry['temp-ic-phy1'] = info['temp_phy1']
             telemetry['temp-ic-phy2'] = info['temp_phy2']
             telemetry['temp-ic-phy3'] = info['temp_phy3']
-
             telemetry['temp-ic-ap'] = info['temp_ap']
             telemetry['temp-ic-cp0'] = info['temp_cp0']
             telemetry['temp-ic-cp2'] = info['temp_cp2']
+
+            if info['pwr_mb']:
+                telemetry['pwr-mb'] = info['pwr_mb']
+            if info['pwr_eth']:
+                telemetry['pwr-eth'] = info['pwr_eth']
+            if info['pwr_nmcf1']:
+                telemetry['pwr-nmcf1'] = info['pwr_nmcf1']
+            if info['pwr_nmcf2']:
+                telemetry['pwr-nmcf2'] = info['pwr_nmcf2']
+            if info['pwr_nmcf3']:
+                telemetry['pwr-nmcf3'] = info['pwr_nmcf3']
+            if info['pwr_nmcf4']:
+                telemetry['pwr-nmcf4'] = info['pwr_nmcf4']
 
         if 'link' in md:
             info = md['link']

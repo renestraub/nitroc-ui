@@ -97,13 +97,17 @@ class MainHandler(tornado.web.RequestHandler):
 
             wear_slc, wear_mlc = d.get((0, 0), 'sys-disc', 'wear')
             sysroot_info = d.get('N/A', 'sys-disc', 'part_sysroot')
-            data_info = d.get('N/A', 'sys-disc', 'part_data')
             tes.append(TE('Disc', f'eMMC Wear Level: SLC: {wear_slc} %, MLC: {wear_mlc} %<br>'
-                                  f'Root: {sysroot_info}<br>'
-                                  f'Data: {data_info}'))
+                                  f'Root: {sysroot_info}'))
 
             a, b, c = d.get((0, 0, 0), 'sys-misc', 'load')
             tes.append(TE('Load', f'{a}, {b}, {c}'))
+
+            core1 = d.get((0, 0, 0), 'sys-misc', 'cpu1_freq') / 1000
+            core2 = d.get((0, 0, 0), 'sys-misc', 'cpu2_freq') / 1000
+            core3 = d.get((0, 0, 0), 'sys-misc', 'cpu3_freq') / 1000
+            core4 = d.get((0, 0, 0), 'sys-misc', 'cpu4_freq') / 1000
+            tes.append(TE('CPU Frequency', f'{core1:.0f}, {core2:.0f}, {core3:.0f}, {core4:.0f} MHz'))
 
             tes.append(TE('<b>Temperatures</b>', ''))
 
@@ -140,7 +144,7 @@ class MainHandler(tornado.web.RequestHandler):
                 temp_str += f'2: {temp:.0f} °C, '
             temp = d.get(0, 'sys-misc', 'temp_phy3')
             if temp:
-                temp_str += f'3: {temp:.0f} °C, '
+                temp_str += f'3: {temp:.0f} °C'
             tes.append(TE('ETH PHY', temp_str))
 
             temp_str = ""
@@ -152,12 +156,38 @@ class MainHandler(tornado.web.RequestHandler):
                 temp_str += f'CP0: {temp:.0f} °C, '
             temp = d.get(0, 'sys-misc', 'temp_cp2')
             if temp:
-                temp_str += f'CP2: {temp:.0f} °C, '
+                temp_str += f'CP2: {temp:.0f} °C'
             tes.append(TE('CPU/SB', temp_str))
 
             # v_in = md['sys-misc']['v_in']
             # v_rtc = md['sys-misc']['v_rtc']
             # tes.append(TE('Voltages', f'Input: {v_in:.1f} V, RTC: {v_rtc:.2f} V'))
+
+            tes.append(TE('<b>Power</b>', ''))
+            temp_str = ""
+            temp = d.get(0, 'sys-misc', 'pwr_mb')
+            if temp:
+                temp_str += f'Mainboard: {temp:.1f} W, '
+            temp = d.get(0, 'sys-misc', 'pwr_eth')
+            if temp:
+                temp_str += f'ETH: {temp:.1f} W'
+            tes.append(TE('PCB', temp_str))
+
+            temp_str = ""
+            temp = d.get(0, 'sys-misc', 'pwr_nmcf1')
+            if temp:
+                temp_str += f'1: {temp:.1f} W, '
+            temp = d.get(0, 'sys-misc', 'pwr_nmcf2')
+            if temp:
+                temp_str += f'2: {temp:.1f} W, '
+            temp = d.get(0, 'sys-misc', 'pwr_nmcf3')
+            if temp:
+                temp_str += f'3: {temp:.1f} W, '
+            temp = d.get(0, 'sys-misc', 'pwr_nmcf4')
+            if temp:
+                temp_str += f'4: {temp:.1f} W'
+            tes.append(TE('NMCF', temp_str))
+
 
             # Network Information
             tes.append(TE('', ''))
