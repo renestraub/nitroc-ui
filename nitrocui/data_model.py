@@ -210,6 +210,7 @@ class ModelWorker(threading.Thread):
         info['temp_phy1'] = si.temperature_phy1()
         info['temp_phy2'] = si.temperature_phy2()
         info['temp_phy3'] = si.temperature_phy3()
+        info['temp_eth_switch'] = si.temperature_eth_switch()
 
         info['temp_ap'] = sit.temp_ap()
         info['temp_cp0'] = sit.temp_cp0()

@@ -113,11 +113,14 @@ class MainHandler(tornado.web.RequestHandler):
 
             temp_str = ""
             temp = d.get(0, 'sys-misc', 'temp_mb')
-            temp_str += f'Mainboard: {temp:.0f} °C'
+            if temp:
+                temp_str += f'Mainboard: {temp:.0f} °C'
             temp = d.get(0, 'sys-misc', 'temp_mb2')
-            temp_str += f', {temp:.0f} °C'
+            if temp:
+                temp_str += f', {temp:.0f} °C'
             temp = d.get(0, 'sys-misc', 'temp_eth')
-            temp_str += f', ETH {temp:.0f} °C'
+            if temp:
+                temp_str += f', ETH {temp:.0f} °C'
             tes.append(TE('PCB', temp_str))
 
             temp_str = ""
@@ -145,7 +148,13 @@ class MainHandler(tornado.web.RequestHandler):
             temp = d.get(0, 'sys-misc', 'temp_phy3')
             if temp:
                 temp_str += f'3: {temp:.0f} °C'
-            tes.append(TE('ETH PHY', temp_str))
+            if temp_str != "":
+                tes.append(TE('ETH PHY', temp_str))
+
+            temp = d.get(0, 'sys-misc', 'temp_eth_switch')
+            if temp:
+                temp_str += f'{temp:.0f} °C'
+                tes.append(TE('ETH Switch', temp_str))
 
             temp_str = ""
             temp = d.get(0, 'sys-misc', 'temp_ap')

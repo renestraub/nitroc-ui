@@ -358,6 +358,7 @@ class ThingsDataCollector(threading.Thread):
     def _info(self, md):
         telemetry = dict()
         if 'sys-misc' in md:
+            # TODO: Create table and iterate over it
             info = md['sys-misc']
             telemetry['cpu-load'] = info['load'][0]
             telemetry['cpu1-freq'] = info['cpu1_freq']
@@ -380,9 +381,15 @@ class ThingsDataCollector(threading.Thread):
             if info['temp_nmcf4']:
                 telemetry['temp-pcb-nmcf4'] = info['temp_nmcf4']
 
-            telemetry['temp-ic-phy1'] = info['temp_phy1']
-            telemetry['temp-ic-phy2'] = info['temp_phy2']
-            telemetry['temp-ic-phy3'] = info['temp_phy3']
+            if info['temp_phy1']:
+                telemetry['temp-ic-phy1'] = info['temp_phy1']
+            if info['temp_phy2']:
+                telemetry['temp-ic-phy2'] = info['temp_phy2']
+            if info['temp_phy3']:
+                telemetry['temp-ic-phy3'] = info['temp_phy3']
+            if info['temp_eth_switch']:
+                telemetry['temp-eth-switch'] = info['temp_eth_switch']
+
             telemetry['temp-ic-ap'] = info['temp_ap']
             telemetry['temp-ic-cp0'] = info['temp_cp0']
             telemetry['temp-ic-cp2'] = info['temp_cp2']

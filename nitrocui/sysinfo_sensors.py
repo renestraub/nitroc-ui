@@ -16,6 +16,7 @@ class SysInfoSensors(SysInfoBase):
         return path.exists(SysInfoSensors.BIN)
 
     def __init__(self):
+        # TODO: Check Ethernet board variant?
         super().__init__()
 
         self.data = None
@@ -29,6 +30,7 @@ class SysInfoSensors(SysInfoBase):
         self.temp_phy1 = None
         self.temp_phy2 = None
         self.temp_phy3 = None
+        self.temp_eth_switch = None
         self.volt_in = None
         self.volt_rtc = None
 
@@ -50,6 +52,15 @@ class SysInfoSensors(SysInfoBase):
 
         self.volt_in = '20.0' # self._extract('input-voltage')
         self.volt_rtc = '20.0' # self._extract('rtc-voltage')
+
+        phy_temps = 0
+        phy_ids = [3, 4, 5, 6, 7]
+        for phy_num in phy_ids:
+            phy_temp = self._extract(f'cp0configspacef2000000mdio12a200switch16mdio0{phy_num}-mdio-{phy_num}', 'temp1')
+            if phy_temp:
+                phy_temps += phy_temp
+
+        self.temp_eth_switch = phy_temps / len(phy_ids)
 
     def input_voltage(self):
         return self.volt_in
@@ -86,6 +97,9 @@ class SysInfoSensors(SysInfoBase):
 
     def temperature_phy3(self):
         return self.temp_phy3
+
+    def temperature_eth_switch(self):
+        return self.temp_eth_switch
 
     def _extract(self, sensor, token):
         regex = rf"{sensor}\nAdapter.*\n{token}:\s*([-+]?\d+.\d+)"
