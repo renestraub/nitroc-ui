@@ -30,7 +30,7 @@ class VnStat:
             # Run vnstat to get traffic information for interface
             # Parse returned output
             # 1;wwan0;2022-12-04;34572019;50154378;84726397;1370;2022-12;34572019;50154378;84726397;263;34572019;50154378;84726397
-            vnstat_call = [VnStat.BIN, '-d', '--oneline', 'b']
+            vnstat_call = [VnStat.BIN, '-d', '--oneline', 'b', '-i', self.__if]
             cp = subprocess.run(vnstat_call, capture_output=True)
             if cp.returncode == 0:
                 result = cp.stdout.decode().strip().split(';')
