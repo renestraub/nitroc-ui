@@ -102,7 +102,7 @@ After=gnss-mgr.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/nitroc-ui-start
+ExecStart=/usr/local/bin/nitroc-ui-start
 PIDFile=/run/nitroc-ui.pid
  
 ExecReload=/bin/kill -HUP $MAINPID

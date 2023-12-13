@@ -1,6 +1,6 @@
 [Unit]
 Description=NITROC Minimal WebUI and Cloud Logger
-After=gnss-mgr.service
+# After=gnss-mgr.service
  
 [Service]
 Type=simple
