@@ -20,6 +20,8 @@ class SysInfoSensors(SysInfoBase):
         super().__init__()
 
         self.data = None
+        self.volt_in = None
+        self.volt_rtc = None
         self.temp_mb1 = None
         self.temp_mb2 = None
         self.temp_eth = None
@@ -31,13 +33,18 @@ class SysInfoSensors(SysInfoBase):
         self.temp_phy2 = None
         self.temp_phy3 = None
         self.temp_eth_switch = None
-        self.volt_in = None
-        self.volt_rtc = None
+        self.temp_nvm_sdd = None
+        self.temp_nvm_sdd = None
+        self.temp_wle3000 = None
+
 
     def poll(self):
         cp = subprocess.run([SysInfoSensors.BIN], stdout=subprocess.PIPE)
         res = cp.stdout.decode().strip()
         self.sensor_res = res
+
+        self.volt_in = '20.0' # self._extract('input-voltage')
+        self.volt_rtc = '3.0' # self._extract('rtc-voltage')
 
         self.temp_mb1 = self._extract('lm75-i2c-0-48', 'temp1')
         self.temp_mb2 = self._extract('lm75-i2c-0-49', 'temp1')
@@ -46,13 +53,13 @@ class SysInfoSensors(SysInfoBase):
         self.temp_nmcf2 = self._extract('lm75-i2c-5-4c', 'temp1')
         self.temp_nmcf3 = self._extract('lm75-i2c-6-4c', 'temp1')
         self.temp_nmcf4 = self._extract('lm75-i2c-7-4c', 'temp1')
+
+        # 2.5 GB PHYs
         self.temp_phy1 = self._extract('f212a600.mdio_mii:01-mdio-1', 'temp1')
         self.temp_phy2 = self._extract('f212a600.mdio_mii:09-mdio-9', 'temp1')
         self.temp_phy3 = self._extract('f212a600.mdio_mii:11-mdio-b', 'temp1')
 
-        self.volt_in = '20.0' # self._extract('input-voltage')
-        self.volt_rtc = '20.0' # self._extract('rtc-voltage')
-
+        # Averaged temperature of 1G ETH Switch
         phy_temps = 0
         phy_ids = [3, 4, 5, 6, 7]
         for phy_num in phy_ids:
@@ -61,6 +68,14 @@ class SysInfoSensors(SysInfoBase):
                 phy_temps += phy_temp
 
         self.temp_eth_switch = phy_temps / len(phy_ids)
+
+        # pci-40100, pci-20100 seem to denote location oin PCI system.
+        # could use this pattern to bind values to a NMCF slot. Would need a reg-ex like lookup
+        self.temp_nvm_sdd = self._extract('nvme-pci-40100', 'Composite')
+
+        # self.temp_wle3000_1 = self._extract('ath11k_hwmon-pci-20100', 'temp1')
+        self.temp_wle3000 = self._extract('ath11k_hwmon-pci.*', 'temp1')  # Find WLE3000 in any slot
+        # print(f"wle3000 {self.temp_wle3000}")
 
     def input_voltage(self):
         return self.volt_in
@@ -100,6 +115,12 @@ class SysInfoSensors(SysInfoBase):
 
     def temperature_eth_switch(self):
         return self.temp_eth_switch
+
+    def temperature_nvm_ssd(self):
+        return self.temp_nvm_sdd
+
+    def temperature_wifi_wle3000(self):
+        return self.temp_wle3000
 
     def _extract(self, sensor, token):
         regex = rf"{sensor}\nAdapter.*\n{token}:\s*([-+]?\d+.\d+)"

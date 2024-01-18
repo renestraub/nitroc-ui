@@ -217,6 +217,9 @@ class ModelWorker(threading.Thread):
         info['temp_cp2'] = sit.temp_cp2()
         # print(info['temp_ap'], info['temp_cp0'], info['temp_cp2'])
 
+        info['temp_nvm_ssd'] = si.temperature_nvm_ssd()
+        info['temp_wifi_wle3000'] = si.temperature_wifi_wle3000()
+
         info['pwr_mb'] = sip.pwr_mb()
         info['pwr_eth'] = sip.pwr_eth()
         info['pwr_nmcf1'] = sip.pwr_nmcf1()

@@ -369,8 +369,8 @@ class ThingsDataCollector(threading.Thread):
             telemetry['voltage-in'] = info['v_in']
             telemetry['mem-free'] = info['mem'][1]
 
-            telemetry['temp-pcb-main1'] = info['temp_mb']
-            telemetry['temp-pcb-main2'] = info['temp_mb2']
+            telemetry['temp-pcb-main1'] = info['temp_mb']  # TODO: rename to temp-pcb-mb-dcdc?
+            telemetry['temp-pcb-main2'] = info['temp_mb2']  # TODO: rename to temp-pcb-mb-peri? 
             telemetry['temp-pcb-eth'] = info['temp_eth']
             if info['temp_nmcf1']:
                 telemetry['temp-pcb-nmcf1'] = info['temp_nmcf1']
@@ -389,23 +389,47 @@ class ThingsDataCollector(threading.Thread):
                 telemetry['temp-ic-phy3'] = info['temp_phy3']
             if info['temp_eth_switch']:
                 telemetry['temp-eth-switch'] = info['temp_eth_switch']
+                # TODO: rename to temp-ic-eth-switch?
+
+            if info['temp_nvm_ssd']:
+                telemetry['temp-nvm-ssd'] = info['temp_nvm_ssd']
+            if info['temp_wifi_wle3000']:
+                # print(f"wifi {info['temp_wifi_wle3000']}")
+                telemetry['temp-wle3000-1'] = info['temp_wifi_wle3000']
 
             telemetry['temp-ic-ap'] = info['temp_ap']
             telemetry['temp-ic-cp0'] = info['temp_cp0']
             telemetry['temp-ic-cp2'] = info['temp_cp2']
 
+            # print(info['pwr_mb'])
+            # print(info['pwr_eth'])
             if info['pwr_mb']:
                 telemetry['pwr-mb'] = info['pwr_mb']
             if info['pwr_eth']:
                 telemetry['pwr-eth'] = info['pwr_eth']
+
+            # Report 0.0 W power for empty slots, so that Thingsboard can accumulate powers in graph
+            # Reasoning: Stacking doesn't work if values are missing
+            # print(info['pwr_nmcf1'])
+            # print(info['pwr_nmcf2'])
+            # print(info['pwr_nmcf3'])
+            # print(info['pwr_nmcf4'])
             if info['pwr_nmcf1']:
                 telemetry['pwr-nmcf1'] = info['pwr_nmcf1']
+            else:
+                telemetry['pwr-nmcf1'] = 0
             if info['pwr_nmcf2']:
                 telemetry['pwr-nmcf2'] = info['pwr_nmcf2']
+            else:
+                telemetry['pwr-nmcf2'] = 0
             if info['pwr_nmcf3']:
                 telemetry['pwr-nmcf3'] = info['pwr_nmcf3']
+            else:
+                telemetry['pwr-nmcf3'] = 0
             if info['pwr_nmcf4']:
                 telemetry['pwr-nmcf4'] = info['pwr_nmcf4']
+            else:
+                telemetry['pwr-nmcf4'] = 0
 
         if 'link' in md:
             info = md['link']
