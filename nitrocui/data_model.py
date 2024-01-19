@@ -20,10 +20,8 @@ import time
 
 from .led import LED_BiColor
 from .mm import MM
-# from .obd_client import OBD2
-# from .phy_info import PhyInfo, PhyInfo5
-# from nitrocui.sig_quality import SignalQuality_LTE
 from .sysinfo_thermal import SysInfoThermal
+from .sysinfo_tc import SysInfoTC
 from .sysinfo_sensors import SysInfoSensors
 from .sysinfo_power import SysInfoPower
 from .vnstat import VnStat
@@ -134,6 +132,7 @@ class ModelWorker(threading.Thread):
         self.si = SysInfoSensors()
         self.sit = SysInfoThermal()
         self.sip = SysInfoPower()
+        self.tc = SysInfoTC()
 
         self._traffic_mon_setup()
 
@@ -170,11 +169,13 @@ class ModelWorker(threading.Thread):
         si = self.si
         sit = self.sit
         sip = self.sip
+        tc = self.tc
 
         # Give each sensor subsystem a chance to efficiently get all required data at once
         si.poll()
         sit.poll()
         sip.poll()
+        tc.poll()
 
         ver = dict()
         ver['serial'] = si.serial()
@@ -219,6 +220,8 @@ class ModelWorker(threading.Thread):
 
         info['temp_nvm_ssd'] = si.temperature_nvm_ssd()
         info['temp_wifi_wle3000'] = si.temperature_wifi_wle3000()
+
+        info["temp_tc1"] = tc.temp_tc()
 
         info['pwr_mb'] = sip.pwr_mb()
         info['pwr_eth'] = sip.pwr_eth()
@@ -343,42 +346,7 @@ class ModelWorker(threading.Thread):
 
         self.model.publish('modem', info)
 
-    # def _obd2_setup(self, port, speed):
-    #     logger.info(f"setting up OBD-II on port {port} at {speed} bps")
-    #     if speed != 250000 and speed != 500000:
-    #         speed = 500000
-    #         logger.info(f"unsupported bitrate, using {speed}")
 
-    #     self._obd2 = OBD2(port, speed)
-    #     self._obd2.setup()
-
-    # def _obd2_poll(self):
-    #     if self._obd2:
-    #         info = dict()
-
-    #         pid = self._obd2.speed()
-    #         if pid:
-    #             info['speed'] = pid.value()
-    #         else:
-    #             info['speed'] = 0.0
-
-    #         pid = self._obd2.engine_coolant_temp()
-    #         if pid:
-    #             info['coolant-temp'] = pid.value()
-    #         else:
-    #             info['coolant-temp'] = 0.0
-
-    #         self.model.publish('obd2', info)
-
-    # def _100base_t1(self):
-    #     state = self.broadr_phy.state()
-    #     quality = self.broadr_phy.quality()
-
-    #     info = dict()
-    #     info['state'] = state
-    #     info['quality'] = str(quality)
-
-    #     self.model.publish('phy-broadr0', info)
 
     def _traffic_mon_setup(self):
         logger.warning('setting up traffic monitoring')

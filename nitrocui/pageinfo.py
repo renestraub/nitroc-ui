@@ -157,6 +157,22 @@ class MainHandler(tornado.web.RequestHandler):
                 tes.append(TE('ETH Switch', temp_str))
 
             temp_str = ""
+            temp = d.get(0, 'sys-misc', 'temp_tc1')
+            if temp:
+                temp_str += f'1: {temp:.0f} °C'
+                tes.append(TE('Thermocouple', temp_str))
+
+            temp = d.get(0, 'sys-misc', 'temp_nvm_ssd')
+            if temp:
+                temp_str = f'{temp:.0f} °C'
+                tes.append(TE('NVM SSD', temp_str))
+
+            temp = d.get(0, 'sys-misc', 'temp_wifi_wle3000')
+            if temp:
+                temp_str = f'{temp:.0f} °C'
+                tes.append(TE('Wi-Fi WLE3000', temp_str))
+
+            temp_str = ""
             temp = d.get(0, 'sys-misc', 'temp_ap')
             if temp:
                 temp_str += f'AP: {temp:.0f} °C, '
