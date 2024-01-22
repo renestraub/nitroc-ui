@@ -247,8 +247,8 @@ class MainHandler(tornado.web.RequestHandler):
                 # # Sometimes ModemManager seems to report wrong access tech
                 # # Display RAT as reported by --signal-get if it differs
                 access_tech = mi['access-tech']
-                access_tech2 = mi['access-tech2']
                 if 'access-tech2' in mi:
+                    access_tech2 = mi['access-tech2']
                     tes.append(TE('State', f'{state}, {access_tech} {access_tech2}'))
                 else:
                     tes.append(TE('State', f'{state}, {access_tech}'))
