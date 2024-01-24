@@ -221,7 +221,11 @@ class ModelWorker(threading.Thread):
         info['temp_nvm_ssd'] = si.temperature_nvm_ssd()
         info['temp_wifi_wle3000'] = si.temperature_wifi_wle3000()
 
-        info["temp_tc1"] = tc.temp_tc()
+        info["temp_tc1"] = tc.temp_tc(0)
+        info["temp_tc2"] = tc.temp_tc(1)
+        info["temp_tc3"] = tc.temp_tc(2)
+        info["temp_tc4"] = tc.temp_tc(3)
+        # print(info['temp_tc1'], info['temp_tc2'], info['temp_tc3'], info['temp_tc3'])
 
         info['pwr_mb'] = sip.pwr_mb()
         info['pwr_eth'] = sip.pwr_eth()

@@ -159,7 +159,17 @@ class MainHandler(tornado.web.RequestHandler):
             temp_str = ""
             temp = d.get(0, 'sys-misc', 'temp_tc1')
             if temp:
-                temp_str += f'1: {temp:.0f} °C'
+                temp_str += f'1: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_tc2')
+            if temp:
+                temp_str += f'2: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_tc3')
+            if temp:
+                temp_str += f'3: {temp:.0f} °C, '
+            temp = d.get(0, 'sys-misc', 'temp_tc4')
+            if temp:
+                temp_str += f'4: {temp:.0f} °C'
+            if temp_str != "":
                 tes.append(TE('Thermocouple', temp_str))
 
             temp = d.get(0, 'sys-misc', 'temp_nvm_ssd')

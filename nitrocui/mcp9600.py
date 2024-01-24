@@ -45,29 +45,27 @@ class MCP9600:
             raise Exception("invalid thermocouple type ({})".format(tctype))
         # filter is from 0 (none) to 7 (max), can limit spikes in
         # temperature readings
-        tcfilter = min(7, max(0, tcfilter))
-        ttype = MCP9600.types.index(tctype)
+        self._tcfilter = min(7, max(0, tcfilter))
+        self._ttype = MCP9600.types.index(tctype)
 
+    def init(self):
         # Device config
         # - All defaults: 0.0625, 18 Bit resolution, 1 sample, normal mode
         self.__setreg8(_REGISTER_DEVICE_CFG, 0x00)
 
         # Sensor config
-        self.__setreg8(_REGISTER_THERM_CFG, tcfilter | (ttype << 4))
+        self.__setreg8(_REGISTER_THERM_CFG, self._tcfilter | (self._ttype << 4))
 
-    @property
     def version(self):
         """ MCP9600 chip version """
         data = self.__getreg8(_REGISTER_VERSION)
         return data[0]
 
-    @property
     def ambient_temperature(self):
         """ Cold junction/ambient/room temperature in Celsius """
         data = self.__getreg16(_REGISTER_COLD_JUNCTION)
         return self.temp_c(data)
 
-    @property
     def temperature(self):
         """ Hot junction temperature in Celsius """
         data = self.__getreg16(_REGISTER_HOT_JUNCTION)
