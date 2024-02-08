@@ -1,4 +1,5 @@
 import time
+import struct
 
 # Inspired by https://github.com/CurlyTaleGamesLLC/Adafruit_MicroPython_MCP9600/blob/main/adafruit_mcp9600.py
 
@@ -72,17 +73,10 @@ class MCP9600:
         return self.temp_c(data)
 
     def temp_c(self, byteData):
-        # Bit 15 = Sign
-        # Bit 14 = 1024 degC
-        # Bit 1 = 1/8 degC
-        # Bit 0 = 1/16 degC
-        temp = (((byteData[0] & 0x7F) * 16) + (byteData[1] / 16))
-        if byteData[0] & 0x80:
-            # Negative temp
-            # TODO: Check properly
-            temp -= 4096
-
-        return temp
+        # data = 16 bit signed, 2's complement
+        # byte 0 = MSB, byte 1 = LSB
+        temp = struct.unpack('>h', byteData)[0]
+        return temp / 16.0
 
     def __getreg8(self, reg: int):
         # print(f'__getreg16 0x{self.ADDR:02x} 0x{reg:02x}')
