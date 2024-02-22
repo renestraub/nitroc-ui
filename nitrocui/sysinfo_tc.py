@@ -31,6 +31,11 @@ class SysInfoTC(SysInfoBase):
         self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x66, tctype = 'T', tcfilter=4))
         self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x67, tctype = 'T', tcfilter=4))
 
+        self.sensors.append(MCP9600(self.i2c_bus[11], address = 0x60, tctype = 'T', tcfilter=4))
+        self.sensors.append(MCP9600(self.i2c_bus[11], address = 0x65, tctype = 'T', tcfilter=4))
+        self.sensors.append(MCP9600(self.i2c_bus[11], address = 0x66, tctype = 'T', tcfilter=4))
+        self.sensors.append(MCP9600(self.i2c_bus[11], address = 0x67, tctype = 'T', tcfilter=4))
+
         # Probe sensors
         pos = 0
         for s in self.sensors:

@@ -405,6 +405,14 @@ class ThingsDataCollector(threading.Thread):
                 telemetry['temp-tc3'] = info['temp_tc3']
             if info['temp_tc4']:
                 telemetry['temp-tc4'] = info['temp_tc4']
+            if info['temp_tc5']:
+                telemetry['temp-tc5'] = info['temp_tc5']
+            if info['temp_tc6']:
+                telemetry['temp-tc6'] = info['temp_tc6']
+            if info['temp_tc7']:
+                telemetry['temp-tc7'] = info['temp_tc7']
+            if info['temp_tc8']:
+                telemetry['temp-tc8'] = info['temp_tc8']
 
             telemetry['temp-ic-ap'] = info['temp_ap']
             telemetry['temp-ic-cp0'] = info['temp_cp0']

@@ -225,6 +225,10 @@ class ModelWorker(threading.Thread):
         info["temp_tc2"] = tc.temp_tc(1)
         info["temp_tc3"] = tc.temp_tc(2)
         info["temp_tc4"] = tc.temp_tc(3)
+        info["temp_tc5"] = tc.temp_tc(4)
+        info["temp_tc6"] = tc.temp_tc(5)
+        info["temp_tc7"] = tc.temp_tc(6)
+        info["temp_tc8"] = tc.temp_tc(7)
         # print(info['temp_tc1'], info['temp_tc2'], info['temp_tc3'], info['temp_tc3'])
 
         info['pwr_mb'] = sip.pwr_mb()
