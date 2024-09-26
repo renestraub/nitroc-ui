@@ -21,14 +21,15 @@ class SysInfoPower(SysInfoBase):
             self.i2c_bus[bus].open()
 
         self.sensors['mb'] = PAC1921(self.i2c_bus[0], 0x4C, 0.005)
-        self.sensors['nmcf1'] = PAC1921(self.i2c_bus[4], 0x2E, 0.020)
-        self.sensors['nmcf2'] = PAC1921(self.i2c_bus[5], 0x2E, 0.020)
-        self.sensors['nmcf3'] = PAC1921(self.i2c_bus[6], 0x2E, 0.020)
-        self.sensors['nmcf4'] = PAC1921(self.i2c_bus[7], 0x2E, 0.020)
+        self.sensors['nmcf1'] = PAC1921(self.i2c_bus[4], 0x4C, 0.020)
+        self.sensors['nmcf2'] = PAC1921(self.i2c_bus[5], 0x4C, 0.020)
+        self.sensors['nmcf3'] = PAC1921(self.i2c_bus[6], 0x4C, 0.020)
+        self.sensors['nmcf4'] = PAC1921(self.i2c_bus[7], 0x4C, 0.020)
         self.sensors['eth'] = PAC1921(self.i2c_bus[8], 0x4C, 0.005)
 
-        for sensor in self.sensors:
+        for _, sensor in self.sensors.items():
             try:
+                # sensor.id()
                 sensor.start()
             except:
                 pass

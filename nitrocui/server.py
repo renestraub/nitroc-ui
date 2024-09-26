@@ -151,8 +151,8 @@ def run_server(port=80):
     # gnss = Gnss(model)
     # gnss.setup()
 
-    gnss_pos = GnssPosition(model)
-    gnss_pos.setup()
+    # gnss_pos = GnssPosition(model)
+    # gnss_pos.setup()
 
     things = Things(model)
     things.setup()
