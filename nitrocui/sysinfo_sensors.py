@@ -46,13 +46,13 @@ class SysInfoSensors(SysInfoBase):
         self.volt_in = '20.0' # self._extract('input-voltage')
         self.volt_rtc = '3.0' # self._extract('rtc-voltage')
 
-        self.temp_mb1 = self._extract('lm75-i2c-0-48', 'temp1')
-        self.temp_mb2 = self._extract('lm75-i2c-0-49', 'temp1')
-        self.temp_eth = self._extract('lm75-i2c-8-48', 'temp1')
-        self.temp_nmcf1 = self._extract('lm75-i2c-4-4c', 'temp1')
-        self.temp_nmcf2 = self._extract('lm75-i2c-5-4c', 'temp1')
-        self.temp_nmcf3 = self._extract('lm75-i2c-6-4c', 'temp1')
-        self.temp_nmcf4 = self._extract('lm75-i2c-7-4c', 'temp1')
+        self.temp_mb1 = self._extract('tmp1075-i2c-0-48', 'temp1')
+        self.temp_mb2 = self._extract('tmp1075-i2c-0-49', 'temp1')
+        self.temp_eth = self._extract('lm75-i2c-8-48', 'temp1')         # TODO: 
+        self.temp_nmcf1 = self._extract('tmp1075-i2c-4-48', 'temp1')
+        self.temp_nmcf2 = self._extract('tmp1075-i2c-5-48', 'temp1')
+        self.temp_nmcf3 = self._extract('tmp1075-i2c-6-48', 'temp1')
+        self.temp_nmcf4 = self._extract('tmp1075-i2c-7-48', 'temp1')
 
         # 2.5 GB PHYs
         self.temp_phy1 = self._extract('f212a600.mdio_mii:01-mdio-1', 'temp1')
