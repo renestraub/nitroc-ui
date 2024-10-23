@@ -25,7 +25,8 @@ setuptools.setup(
     install_requires=[
         'tornado',
         'requests',
-        'ping3'
+        'ping3',
+        'pycurl'
     ],
     include_package_data=True,  # Use MANIFEST.in to add *.html, *.css files
     entry_points={
