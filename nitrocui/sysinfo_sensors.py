@@ -48,7 +48,7 @@ class SysInfoSensors(SysInfoBase):
 
         self.temp_mb1 = self._extract('tmp1075-i2c-0-48', 'temp1')
         self.temp_mb2 = self._extract('tmp1075-i2c-0-49', 'temp1')
-        self.temp_eth = self._extract('lm75-i2c-8-48', 'temp1')         # TODO: 
+        self.temp_eth = self._extract('tmp1075-i2c-8-48', 'temp1')
         self.temp_nmcf1 = self._extract('tmp1075-i2c-4-48', 'temp1')
         self.temp_nmcf2 = self._extract('tmp1075-i2c-5-48', 'temp1')
         self.temp_nmcf3 = self._extract('tmp1075-i2c-6-48', 'temp1')
