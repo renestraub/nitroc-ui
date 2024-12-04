@@ -33,11 +33,19 @@ class SysInfoThermal(SysInfoBase):
             return round(float(temp_in_milli_c) / 1000.0, 1)
 
     def temp_cp0(self):
-        with open(f'{self.cp0}/temp') as f:
-            temp_in_milli_c = f.readline().strip()
-            return round(float(temp_in_milli_c) / 1000.0, 1)
+        # TODO: 20241204 - Currently not working
+        try:
+            with open(f'{self.cp0}/temp') as f:
+                temp_in_milli_c = f.readline().strip()
+                return round(float(temp_in_milli_c) / 1000.0, 1)
+        except FileNotFoundError:
+            return 0.0
 
     def temp_cp2(self):
-        with open(f'{self.cp2}/temp') as f:
-            temp_in_milli_c = f.readline().strip()
-            return round(float(temp_in_milli_c) / 1000.0, 1)
+        # TODO: 20241204 - Currently not working
+        try:
+            with open(f'{self.cp2}/temp') as f:
+                temp_in_milli_c = f.readline().strip()
+                return round(float(temp_in_milli_c) / 1000.0, 1)
+        except FileNotFoundError:
+            return 0.0
