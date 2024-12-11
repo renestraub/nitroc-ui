@@ -22,19 +22,19 @@ class SysInfoTC(SysInfoBase):
         self.sensors = []
         self.present = 0    # Bitmask with detected sensors
 
-        for bus in [10, 11]:
+        # New IO Env module. 8 thermal sensors ;-)
+        for bus in [10]:
             self.i2c_bus[bus] = I2C(bus)
             self.i2c_bus[bus].open()
 
         self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x60, tctype = 'T', tcfilter=4))
+        self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x61, tctype = 'T', tcfilter=4))
+        self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x62, tctype = 'T', tcfilter=4))
+        self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x63, tctype = 'T', tcfilter=4))
+        # self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x64, tctype = 'T', tcfilter=4))
         self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x65, tctype = 'T', tcfilter=4))
         self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x66, tctype = 'T', tcfilter=4))
         self.sensors.append(MCP9600(self.i2c_bus[10], address = 0x67, tctype = 'T', tcfilter=4))
-
-        self.sensors.append(MCP9600(self.i2c_bus[11], address = 0x60, tctype = 'T', tcfilter=4))
-        self.sensors.append(MCP9600(self.i2c_bus[11], address = 0x65, tctype = 'T', tcfilter=4))
-        self.sensors.append(MCP9600(self.i2c_bus[11], address = 0x66, tctype = 'T', tcfilter=4))
-        self.sensors.append(MCP9600(self.i2c_bus[11], address = 0x67, tctype = 'T', tcfilter=4))
 
         # Probe sensors
         pos = 0

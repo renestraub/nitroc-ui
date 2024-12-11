@@ -397,6 +397,7 @@ class ThingsDataCollector(threading.Thread):
                 # print(f"wifi {info['temp_wifi_wle3000']}")
                 telemetry['temp-wle3000-1'] = info['temp_wifi_wle3000']
 
+            # TODO: For loop
             if info['temp_tc1']:
                 telemetry['temp-tc1'] = info['temp_tc1']
             if info['temp_tc2']:
@@ -411,8 +412,8 @@ class ThingsDataCollector(threading.Thread):
                 telemetry['temp-tc6'] = info['temp_tc6']
             if info['temp_tc7']:
                 telemetry['temp-tc7'] = info['temp_tc7']
-            if info['temp_tc8']:
-                telemetry['temp-tc8'] = info['temp_tc8']
+            # if info['temp_tc8']:
+            #     telemetry['temp-tc8'] = info['temp_tc8']
 
             telemetry['temp-ic-ap'] = info['temp_ap']
             telemetry['temp-ic-cp0'] = info['temp_cp0']
