@@ -184,7 +184,7 @@ class Things(threading.Thread):
             else:
                 logger.warning('could not upload attribute data, keeping in queue')
 
-    def _post_data(self, msgtype, payload):
+    def _post_data(self, msgtype, payload, id = 0):
         """
         Sends data with HTTP(S) POST request to Thingsboard server
 
@@ -197,10 +197,13 @@ class Things(threading.Thread):
         """
         res = False
 
-        assert msgtype == 'attributes' or msgtype == 'telemetry'
+        assert msgtype == 'attributes' or msgtype == 'telemetry' or msgtype == 'rpc'
 
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, f'{self.api_server}/api/v1/{self.api_token}/{msgtype}')
+        if msgtype == 'rpc':
+            c.setopt(pycurl.URL, f'{self.api_server}/api/v1/{self.api_token}/{msgtype}/{id}')
+        else:
+            c.setopt(pycurl.URL, f'{self.api_server}/api/v1/{self.api_token}/{msgtype}')
         c.setopt(pycurl.HTTPHEADER, ['Content-Type:application/json'])
         c.setopt(pycurl.POST, 1)
         c.setopt(pycurl.CONNECTTIMEOUT_MS, 3000)
