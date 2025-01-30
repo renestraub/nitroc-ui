@@ -11,8 +11,10 @@ import configparser
 import json
 import logging
 import math
+import requests
 import threading
 import time
+from abc import ABC, abstractmethod
 from io import BytesIO
 
 import pycurl
@@ -62,11 +64,15 @@ class Things(threading.Thread):
         self._attributes_queue = TransmitQueue(1)
         self._data_queue = TransmitQueue(self.MAX_QUEUE_SIZE)
         self._data_collector = ThingsDataCollector(model, self._data_queue, self._attributes_queue)
+        self._req_listener = ThingsRequestListener(self)
 
     def setup(self):
         self.daemon = True
         if self.has_server:
             self.start()
+
+    def register_rpc(self, handler):
+        self._req_listener.register(handler)
 
     def enable(self, enable):
         if enable:
@@ -74,6 +80,7 @@ class Things(threading.Thread):
                 if not self.active:
                     logger.info("service starting")
                     self._data_collector.enable()
+                    self._req_listener.enable()
                     self.active = True
                     self.state = 'init'
                     res = 'Started cloud logger'
@@ -85,6 +92,7 @@ class Things(threading.Thread):
             logger.info("service stopping")
             if self.active:
                 self._data_collector.disable()
+                self._req_listener.disable()
                 self.active = False
                 res = 'Stopped cloud logger'
             else:
@@ -577,3 +585,103 @@ class ThingsDataCollector(threading.Thread):
             return 2
         else:
             return 0
+
+
+class ThingsRequestListener(threading.Thread):
+    def __init__(self, base: Things):
+        super().__init__()
+
+        self.base = base
+        self.api_server = base.api_server
+        self.api_token = base.api_token
+        self.timeout = 10
+        self.active = False
+        self.handlers = {}
+
+        self.__session = requests.Session()
+        self.__session.headers.update({'Content-Type': 'application/json'})
+
+        self.daemon = True
+        self.start()
+
+    def register(self, handler):
+        method = handler.method
+        logger.info(f"registering RPC {handler} for {method}")
+        assert not self.handlers.get(method)    # Must not refister method twice
+
+        self.handlers[method] = handler
+
+    def enable(self):
+        self.active = True
+
+    def disable(self):
+        self.active = False
+
+    def run(self):
+        logger.info("starting cloud request thread")
+
+        params = {
+            'timeout': (self.timeout) * 1000
+        }
+        url = f'{self.api_server}/api/v1/{self.api_token}/rpc'
+
+        while True:
+            if self.active:
+                # print("checking for requests")
+                response = self.__session.get(url=url,
+                                            params=params,
+                                            timeout=self.timeout * 1000)
+                if response.status_code == 408:  # Request timeout
+                    pass
+                elif response.status_code == 504:  # Gateway Timeout
+                    pass  # Reconnect
+                else:
+                    response.raise_for_status()                   
+                    request = response.json()
+                    logger.info(f"received {request}")
+                    if {'id', 'method', 'params'} <= request.keys():
+                        self.dispatch(request)
+                    else:
+                        logger.info(f"illegal request format")
+
+            time.sleep(0.1)
+
+    def dispatch(self, request):
+        success = False
+
+        id = request['id']
+        method = request['method']
+
+        handler = self.handlers.get(method)
+        if handler:
+            params = request['params']
+            logger.info(f"calling {handler} with {params}")
+            success = handler.run(params)
+        else:
+            logger.info(f"unsupported command {method}")
+
+        # Send return code back to server
+        if success:
+            result_ok = {"result" : "ok"}
+            self.base._post_data("rpc", result_ok, id)
+        else:
+            result_err = {"result" : "error"}
+            self.base._post_data("rpc", result_err, id)
+
+
+class RpcRunner(ABC):
+    def __init__(self, method):
+        """
+        Constructor to initialize RpcRunner with the given rpc_config.
+        
+        :param rpc_config: Configuration for the RPC connection.
+        """
+        self.method = method
+    
+    @abstractmethod
+    def run(self):
+        """
+        Abstract method that must be implemented by derived classes.
+        This method is responsible for executing the RPC logic.
+        """
+        pass

@@ -10,6 +10,8 @@ import os
 # import sys
 
 import requests
+import threading
+import time
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
@@ -18,7 +20,7 @@ from ._version import __version__ as version
 from .data_model import Model
 from .wwan_model import Wwan
 # from .gnss_model import Gnss
-from .gnss_pos import GnssPosition
+# from .gnss_pos import GnssPosition
 from .mm import MM
 from .pagegnss import GnssHandler, GnssSaveStateHandler, GnssClearStateHandler
 from .pagegnss import GnssFactoryResetHandler, GnssColdStartHandler
@@ -27,7 +29,7 @@ from .pagegnssedit import GnssEditHandler, GnssSaveHandler, GnssRestartHandler
 from .realtime import RealtimeHandler, RealtimeWebSocket
 from .pageinfo import MainHandler
 from .pagetraffic import TrafficHandler, TrafficImageHandler
-from .things import Things
+from .things import Things, RpcRunner
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(module)-12s %(message)s'
@@ -141,6 +143,47 @@ class NotImplementedHandler(tornado.web.RequestHandler):
         self.write('WARNING: Function not yet implemented')
 
 
+class RpcReboot(RpcRunner):
+    def run(self, _args: dict) -> bool:
+        logger.warning('rebooting system in 5 seconds')
+        thread = threading.Thread(target=RpcReboot.do_reboot)
+        thread.start() 
+        return True
+
+    @staticmethod
+    def do_reboot():
+        time.sleep(5)
+        logger.warning('rebooting system now')
+        os.system("reboot")
+
+
+class RpcLED(RpcRunner):
+    def run(self, args: dict) -> bool:
+        colors = {
+            "off": "0 0 0",
+            "red": "100 0 0",
+            "green": "0 100 0",
+            "blue": "0 0 100",
+        }
+
+        if args in colors:
+            rgb_color = colors[args]
+            logger.info(f"setting LED to {rgb_color}")
+
+            rgb_path = r'/sys/class/leds/chromeos:multicolor:power/multi_intensity'
+            with open(rgb_path, 'w') as f:
+                f.write(rgb_color)
+
+            brightness_path = r'/sys/class/leds/chromeos:multicolor:power/brightness'
+            with open(brightness_path, 'w') as f:
+                f.write("100")
+
+            return True
+        else:
+            logger.info(f"unsupported color {args}")
+            return False
+
+
 def run_server(port=80):
     model = Model()
     model.setup()
@@ -156,6 +199,8 @@ def run_server(port=80):
 
     things = Things(model)
     things.setup()
+    things.register_rpc(RpcReboot("reboot"))
+    things.register_rpc(RpcLED("led"))
 
     # Start cloud logging by default
     things.enable(True)
