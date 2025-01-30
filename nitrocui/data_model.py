@@ -24,6 +24,7 @@ from .sysinfo_thermal import SysInfoThermal
 from .sysinfo_tc import SysInfoTC
 from .sysinfo_sensors import SysInfoSensors
 from .sysinfo_power import SysInfoPower
+from .crosec_sensors import CrosEcSensors
 from .vnstat import VnStat
 
 
@@ -130,6 +131,7 @@ class ModelWorker(threading.Thread):
         self.name = 'model-worker'
 
         self.si = SysInfoSensors()
+        self.crosi = CrosEcSensors()
         self.sit = SysInfoThermal()
         self.sip = SysInfoPower()
         self.tc = SysInfoTC()
@@ -167,12 +169,14 @@ class ModelWorker(threading.Thread):
 
     def _sysinfo(self):
         si = self.si
+        crosi = self.crosi
         sit = self.sit
         sip = self.sip
         tc = self.tc
 
         # Give each sensor subsystem a chance to efficiently get all required data at once
         si.poll()
+        crosi.poll()
         sit.poll()
         sip.poll()
         tc.poll()
@@ -238,8 +242,8 @@ class ModelWorker(threading.Thread):
         info['pwr_nmcf3'] = sip.pwr_nmcf3()
         info['pwr_nmcf4'] = sip.pwr_nmcf4()
 
-        info['v_in'] = si.input_voltage()
-        info['v_rtc'] = si.rtc_voltage()
+        info['v_in'] = crosi.input_voltage()
+        info['v_rtc'] = crosi.rtc_voltage()
 
         self.model.publish('sys-misc', info)
 
