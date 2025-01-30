@@ -152,7 +152,7 @@ class ModelWorker(threading.Thread):
             if cnt == 0 or cnt % 4 == 2:
                 self._modem()
 
-            if cnt == 0 or cnt % 20 == 15:
+            if cnt == 0 or cnt % 120 == 15:
                 self._disc()
 
             # if self.model.obd2_port:
