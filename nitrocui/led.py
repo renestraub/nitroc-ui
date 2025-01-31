@@ -18,7 +18,9 @@ class LED_BiColor():
         self._set(False, True)
 
     def _set(self, red, green):
-        print(f'set led {red} {green}')
+        pass
+        # print(f'set led {red} {green}')
+
         # red_str = '1' if red else '0'
         # green_str = '1' if green else '0'
 
