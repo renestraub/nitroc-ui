@@ -36,7 +36,7 @@ FORMAT = '%(asctime)-15s %(levelname)-8s %(module)-12s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('nitroc-ui')
 logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 # Init section
@@ -146,8 +146,7 @@ class NotImplementedHandler(tornado.web.RequestHandler):
 class RpcReboot(RpcRunner):
     def run(self, _args: dict) -> bool:
         logger.warning('rebooting system in 5 seconds')
-        thread = threading.Thread(target=RpcReboot.do_reboot)
-        thread.start() 
+        threading.Thread(target=RpcReboot.do_reboot).start()
         return True
 
     @staticmethod
@@ -155,6 +154,19 @@ class RpcReboot(RpcRunner):
         time.sleep(5)
         logger.warning('rebooting system now')
         os.system("reboot")
+
+
+class RpcPoweroff(RpcRunner):
+    def run(self, _args: dict) -> bool:
+        logger.warning('powering down system in 5 seconds')
+        threading.Thread(target=RpcPoweroff.do_poweroff).start()
+        return True
+
+    @staticmethod
+    def do_poweroff():
+        time.sleep(5)
+        logger.warning('powering off system now')
+        os.system("poweroff")
 
 
 class RpcLED(RpcRunner):
@@ -200,6 +212,7 @@ def run_server(port=80):
     things = Things(model)
     things.setup()
     things.register_rpc(RpcReboot("reboot"))
+    things.register_rpc(RpcPoweroff("poweroff"))
     things.register_rpc(RpcLED("led"))
 
     # Start cloud logging by default
