@@ -342,7 +342,8 @@ class ModelWorker(threading.Thread):
                 ut = b.uptime(b_info)
                 if ut:
                     info['bearer-uptime'] = ut
-                    ip = b.ip(b_info)
+                ip = b.ip(b_info)
+                if ip:
                     info['bearer-ip'] = ip
 
             s = m.sim(m_info)
