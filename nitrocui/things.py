@@ -19,6 +19,7 @@ from io import BytesIO
 
 import pycurl
 
+from .tools import is_valid_ipv4
 from .transmit_queue import TransmitQueue
 from ._version import __version__ as ui_version
 
@@ -29,8 +30,8 @@ class Things(threading.Thread):
     # Singleton accessor
     instance = None
 
-    # Upload every 30 seconds
-    TELEMETRY_UPLOAD_PERIOD = 30
+    # Upload every 15 seconds
+    TELEMETRY_UPLOAD_PERIOD = 15
 
     # Upload at most 120 entries. Assuming around 100 bytes per entry,
     # this makes 12 kBytes.
@@ -48,6 +49,7 @@ class Things(threading.Thread):
 
         self.model = model
         self.state = 'init'
+        self.counter = 0
         self.active = False
 
         self.config = configparser.ConfigParser()
@@ -80,8 +82,8 @@ class Things(threading.Thread):
                 if not self.active:
                     logger.info("service starting")
                     self._data_collector.enable()
-                    self._req_listener.enable()
                     self.active = True
+                    self.counter = 0
                     self.state = 'init'
                     res = 'Started cloud logger'
                 else:
@@ -103,40 +105,49 @@ class Things(threading.Thread):
         return res
 
     def run(self):
-        cnt = 0
-
         while True:
             if self.active:
                 next_state = self.state
-                md = self.model.get_all()
 
-                if self.state != 'connected':
-                    # Check if we are connected
-                    if 'modem' in md:
-                        m = md['modem']
-                        if 'modem-id' in m:
-                            if 'bearer-id' in m:
-                                # logger.info('link ready, changing to connected state')
-                                cnt = 0
-                                next_state = 'connected'
+                if self.state == 'init':
+                    if self._have_bearer():
+                        logger.info('bearer found')
+
+                        self._req_listener.enable()
+                        self.counter = 0
+                        next_state = 'connected'
 
                 elif self.state == 'connected':
-                    # Upload any pending data
-                    self._upload_attributes()
+                    if not self._have_bearer():
+                        logger.warning('lost IP connection')
 
-                    if cnt % Things.TELEMETRY_UPLOAD_PERIOD == 5:
-                        self._upload_telemetry()
+                        self._req_listener.disable()
+                        next_state = 'init'
+                    else:
+                        # Upload any pending attributes, one per second
+                        self._upload_attributes()
 
-                    # TODO: check for error and switch to disconnected state in case of problem
+                        # Upload pending telemetry as batch every some seconds
+                        if self.counter % Things.TELEMETRY_UPLOAD_PERIOD == 5:
+                            self._upload_telemetry()
+
+                        # TODO: check for errors
 
                 # state change
                 if self.state != next_state:
                     logger.info(f'changed state from {self.state} to {next_state}')
                     self.state = next_state
 
-                cnt += 1
+                self.counter += 1
 
             time.sleep(1.0)
+
+    def _have_bearer(self):
+        info = self.model.get('modem')
+        if info and 'bearer-id' in info and 'bearer-ip' in info:
+            bearer_ip = info['bearer-ip']
+            if is_valid_ipv4(bearer_ip):
+                return True
 
     def _upload_telemetry(self):
         """
@@ -214,8 +225,8 @@ class Things(threading.Thread):
             c.setopt(pycurl.URL, f'{self.api_server}/api/v1/{self.api_token}/{msgtype}')
         c.setopt(pycurl.HTTPHEADER, ['Content-Type:application/json'])
         c.setopt(pycurl.POST, 1)
-        c.setopt(pycurl.CONNECTTIMEOUT_MS, 3000)
-        c.setopt(pycurl.TIMEOUT_MS, 4000)
+        c.setopt(pycurl.CONNECTTIMEOUT_MS, 5000)
+        c.setopt(pycurl.TIMEOUT_MS, 5000)
         # c.setopt(c.VERBOSE, True)
 
         body_as_json_string = json.dumps(payload)  # dict to json

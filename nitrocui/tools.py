@@ -1,5 +1,5 @@
+import ipaddress
 import subprocess
-# import asyncio
 
 
 def secs_to_hhmm(secs):
@@ -9,22 +9,11 @@ def secs_to_hhmm(secs):
     return h, m
 
 
-def ping(ip):
-    cp = subprocess.run(['/usr/bin/ping', '-c', '4', ip], stdout=subprocess.PIPE)
-    res = cp.stdout.decode()
+# def ping(ip):
+#     cp = subprocess.run(['/usr/bin/ping', '-c', '4', ip], stdout=subprocess.PIPE)
+#     res = cp.stdout.decode()
 
-    return res
-
-
-"""
-async def ping(ip):
-    proc = await asyncio.create_subprocess_exec('ping', '-c', '4', ip, stdout=subprocess.PIPE)
-    await proc.wait()
-    # cp = subprocess.run(['/usr/bin/ping', '-c', '4', ip], stdout=subprocess.PIPE)
-    res = proc.stdout.decode()
-
-    return res
-"""
+#     return res
 
 
 def nmcli_c():
@@ -32,3 +21,11 @@ def nmcli_c():
     res = cp.stdout.decode()
 
     return res
+
+
+def is_valid_ipv4(address):
+    try:
+        ipaddress.IPv4Address(address)
+        return True  # It's a valid IPv4 address
+    except ipaddress.AddressValueError:
+        return False  # It's not a valid IPv4 address

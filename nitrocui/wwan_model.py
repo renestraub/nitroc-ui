@@ -4,6 +4,8 @@ import time
 
 from ping3 import ping
 
+from .tools import is_valid_ipv4
+
 logger = logging.getLogger('nitroc-ui')
 
 
@@ -48,44 +50,45 @@ class GsmWorker(threading.Thread):
         link_data = dict()
 
         while True:
-            info = self.model.get('modem')
             if self.state == 'init':
-                # check if we have a valid bearer
-                try:
-                    if info and 'bearer-ip' in info:
-                        logger.info('bearer found')
-                        self.state = 'connected'
-                except KeyError:
-                    pass
+                if self._have_bearer():
+                    logger.info('bearer found')
+
+                    self.state = 'connected'
 
             elif self.state == 'connected':
-                try:
-                    if info and 'bearer-ip' not in info:
-                        logger.warning('lost IP connection')
+                if not self._have_bearer():
+                    logger.warning('lost IP connection')
 
-                        link_data['delay'] = 0.0
-                        self.model.publish('link', link_data)
-                        self.state = 'init'
-                    else:
-                        if self.counter % 5 == 2:
-                            try:
-                                delay = ping(PING_HOST, timeout=1.0)
-                                if delay:
-                                    link_data['delay'] = round(float(delay), 3)
-                                else:
-                                    link_data['delay'] = 0.0
+                    link_data['delay'] = 0.0
+                    self.model.publish('link', link_data)
 
-                                self.model.publish('link', link_data)
-
-                            except OSError as e:
-                                logger.warning('Captured ping error')
-                                logger.warning(e)
-
+                    self.state = 'init'
+                else:
+                    if self.counter % 5 == 2:
+                        try:
+                            delay = ping(PING_HOST, timeout=1.0)
+                            if delay:
+                                link_data['delay'] = round(float(delay), 3)
+                            else:
                                 link_data['delay'] = 0.0
-                                self.model.publish('link', link_data)
-                                self.state = 'init'
-                except KeyError:
-                    pass
+
+                            self.model.publish('link', link_data)
+
+                        except OSError as e:
+                            logger.warning('Captured ping error')
+                            logger.warning(e)
+
+                            link_data['delay'] = 0.0
+                            self.model.publish('link', link_data)
+                            # self.state = 'init'
 
             self.counter += 1
             time.sleep(1.0)
+
+    def _have_bearer(self):
+        info = self.model.get('modem')
+        if info and 'bearer-id' in info and 'bearer-ip' in info:
+            bearer_ip = info['bearer-ip']
+            if is_valid_ipv4(bearer_ip):
+                return True
