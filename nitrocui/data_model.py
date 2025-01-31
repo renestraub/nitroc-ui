@@ -111,7 +111,7 @@ class Model(object):
             self.data['watermark'][topic] = None
 
         curr = self.data['watermark'][topic]
-        logger.debug(f'checking watermark {topic}, current = {curr}, new = {value}')
+        # logger.debug(f'checking watermark {topic}, current = {curr}, new = {value}')
 
         if curr is None or value > curr:
             self.data['watermark'][topic] = value
@@ -234,6 +234,8 @@ class ModelWorker(threading.Thread):
         info["temp_tc6"] = tc.temp_tc(5)
         info["temp_tc7"] = tc.temp_tc(6)
         # info["temp_tc8"] = tc.temp_tc(7)
+        # print(info['temp_tc1'], info['temp_tc2'], info['temp_tc3'], info['temp_tc3'])
+        # print(info['temp_tc5'], info['temp_tc6'], info['temp_tc7'])
 
         info['pwr_mb'] = sip.pwr_mb()
         info['pwr_eth'] = sip.pwr_eth()
@@ -359,8 +361,7 @@ class ModelWorker(threading.Thread):
             self.modem_setup_done = False
 
         self.model.publish('modem', info)
-
-
+        # print(f'*** {info}')
 
     def _traffic_mon_setup(self):
         logger.warning('setting up traffic monitoring')

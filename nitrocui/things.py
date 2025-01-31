@@ -11,7 +11,9 @@ import configparser
 import json
 import logging
 import math
+import queue
 import requests
+from requests.exceptions import RequestException, Timeout
 import threading
 import time
 from abc import ABC, abstractmethod
@@ -94,7 +96,6 @@ class Things(threading.Thread):
             logger.info("service stopping")
             if self.active:
                 self._data_collector.disable()
-                self._req_listener.disable()
                 self.active = False
                 res = 'Stopped cloud logger'
             else:
@@ -603,60 +604,90 @@ class ThingsRequestListener(threading.Thread):
         super().__init__()
 
         self.base = base
+        self.model = base.model
         self.api_server = base.api_server
         self.api_token = base.api_token
         self.timeout = 10
-        self.active = False
         self.handlers = {}
-
-        self.__session = requests.Session()
-        self.__session.headers.update({'Content-Type': 'application/json'})
+        self.__session = None
+        self.q = queue.Queue()
 
         self.daemon = True
         self.start()
 
     def register(self, handler):
         method = handler.method
-        logger.info(f"registering RPC {handler} for {method}")
+        logger.debug(f"registering RPC {handler} for {method}")
         assert not self.handlers.get(method)    # Must not refister method twice
 
         self.handlers[method] = handler
 
     def enable(self):
-        self.active = True
+        logger.info("starting RPC request server")
+        self.q.put("start")
 
     def disable(self):
-        self.active = False
+        logger.info("stopping RPC request server")
+        self.q.put("stop")
+        # TODO: Wait for completion?
 
     def run(self):
-        logger.info("starting cloud request thread")
+        logger.debug("starting RPC request thread")
 
         params = {
             'timeout': (self.timeout) * 1000
         }
         url = f'{self.api_server}/api/v1/{self.api_token}/rpc'
 
+        state = 'idle'
+        delay = 1.0
         while True:
-            if self.active:
-                # print("checking for requests")
-                response = self.__session.get(url=url,
+            # logger.warning("RPC request loop")
+
+            # Check for events from other threads
+            try:
+                msg = self.q.get(timeout = delay)
+                if msg == 'start':
+                    assert self.__session is None
+                    self.__session = requests.Session()
+                    self.__session.headers.update({'Content-Type': 'application/json'})
+                    delay = 0.0
+                    state = 'listening'
+                    logger.info("RPC changed to listening")
+                elif msg == 'stop':
+                    self.__session = None
+                    state = 'idle'
+                    delay = 5.0
+                    logger.info("RPC changed to idle")
+            except queue.Empty:
+                pass
+
+            if state == 'listening':
+                try:
+                    # logger.warning("RPC checking for requests")
+                    assert self.__session
+                    response = self.__session.get(url=url,
                                             params=params,
-                                            timeout=self.timeout * 1000)
-                if response.status_code == 408:  # Request timeout
-                    pass
-                elif response.status_code == 504:  # Gateway Timeout
-                    pass  # Reconnect
-                else:
-                    response.raise_for_status()                   
-                    request = response.json()
-                    logger.info(f"received {request}")
-                    if {'id', 'method', 'params'} <= request.keys():
-                        self.dispatch(request)
+                                            timeout=self.timeout)
+                    if response.status_code == 408:  # Request timeout
+                        logger.warning("RPC request timeout (408)")
+                        pass
+                    elif response.status_code == 504:  # Gateway Timeout
+                        logger.warning("RPC gateway timeout (504)")
+                        pass
                     else:
-                        logger.info(f"illegal request format")
-
-            time.sleep(0.1)
-
+                        response.raise_for_status()
+                        request = response.json()
+                        logger.info(f"RPC received for {request}")
+                        if {'id', 'method', 'params'} <= request.keys():
+                            self.dispatch(request)
+                        else:
+                            logger.info(f"illegal RPC request format")
+                except Timeout:
+                    logger.debug("RPC request timeout")
+                except RequestException:
+                    logger.warning("RPC request exception")
+        
     def dispatch(self, request):
         success = False
 
