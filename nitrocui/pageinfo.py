@@ -381,7 +381,6 @@ class MainHandler(tornado.web.RequestHandler):
                 speed = md['obd2']['speed']
                 tes.append(TE('Speed', f'{speed/3.60:.0f} m/s, {speed:.0f} km/h'))
 
-            # OBD-II
             if 'phy-broadr0' in md:
                 state = md['phy-broadr0']
                 tes.append(TE('', ''))

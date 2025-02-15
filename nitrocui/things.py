@@ -337,6 +337,10 @@ class ThingsDataCollector(threading.Thread):
             time.sleep(1.0)
 
     def _attributes(self, md):
+        if 'sys-version' not in md:
+            # Still starting up, data not yet available
+            return
+
         os_version = md['sys-version']['sys']
         serial = md['sys-version']['serial']
         hw_ver = md['sys-version']['hw']
