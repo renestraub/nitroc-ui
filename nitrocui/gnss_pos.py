@@ -59,7 +59,7 @@ class GnssPosition(threading.Thread):
             logger.info('gpsd connected')
             self.state = 'connected'
         else:
-            logger.warning('cannot connect to gpsd, is it running?')
+            logger.debug('cannot connect to gpsd, is it running?')
             time.sleep(3.0)
 
     def _state_connected(self):

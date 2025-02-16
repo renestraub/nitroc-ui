@@ -19,6 +19,7 @@ class Gpsd(threading.Thread):
     def __init__(self):
         super().__init__()
 
+        self.connection_attemps = 0
         self.connect_msg = '?WATCH={"enable":true,"json":true}'.encode()
         self.response_queue = queue.Queue()
         self.thread_ready_event = threading.Event()
@@ -27,9 +28,13 @@ class Gpsd(threading.Thread):
 
     def setup(self):
         try:
-            logger.info('connecting to gpsd')
+            self.connection_attemps += 1
+
+            if self.connection_attemps == 1:
+                logger.info('connecting to gpsd')
+
             self.listen_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.listen_sock.connect(self.GPSD_DATA_SOCKET)
+            self.listen_sock.connect(self.GPSD_DATA_SOCKET)  # raises socket.error if gpsd is not running
 
             # Start worker thread in daemon mode, will invoke run() method
             self.start()
@@ -39,10 +44,13 @@ class Gpsd(threading.Thread):
             # handle the response.
             logger.debug('waiting for receive thread to become active')
             self.thread_ready_event.wait()
+
+            logger.info('connected to gpsd')
             return True
 
         except socket.error as msg:
-            logger.warning(msg)
+            if self.connection_attemps == 1:
+                logger.warning(msg)
             return False
 
     def cleanup(self):

@@ -20,7 +20,7 @@ from ._version import __version__ as version
 from .data_model import Model
 from .wwan_model import Wwan
 # from .gnss_model import Gnss
-# from .gnss_pos import GnssPosition
+from .gnss_pos import GnssPosition
 from .mm import MM
 from .pagegnss import GnssHandler, GnssSaveStateHandler, GnssClearStateHandler
 from .pagegnss import GnssFactoryResetHandler, GnssColdStartHandler
@@ -206,8 +206,8 @@ def run_server(port=80):
     # gnss = Gnss(model)
     # gnss.setup()
 
-    # gnss_pos = GnssPosition(model)
-    # gnss_pos.setup()
+    gnss_pos = GnssPosition(model)
+    gnss_pos.setup()
 
     things = Things(model)
     things.setup()
