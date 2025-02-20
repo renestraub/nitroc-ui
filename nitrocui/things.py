@@ -718,9 +718,7 @@ class ThingsRequestListener(threading.Thread):
 class RpcRunner(ABC):
     def __init__(self, method):
         """
-        Constructor to initialize RpcRunner with the given rpc_config.
-        
-        :param rpc_config: Configuration for the RPC connection.
+        Constructor to initialize RpcRunner with callback method.
         """
         self.method = method
     

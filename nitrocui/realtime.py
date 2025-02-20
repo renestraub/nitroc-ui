@@ -7,6 +7,7 @@ using a websocket
 import logging
 
 import tornado.web
+import tornado.websocket
 
 from ._version import __version__ as version
 from .data_model import Model
@@ -17,6 +18,7 @@ logger = logging.getLogger('nitroc-ui')
 class RealtimeHandler(tornado.web.RequestHandler):
     def get(self):
         m = Model.instance
+        assert m
         md = m.get_all()
         serial = md['sys-version']['serial']
 
@@ -56,6 +58,7 @@ class RealtimeWebSocket(tornado.websocket.WebSocketHandler):
     @staticmethod
     def timer():
         m = Model.instance
+        assert m
         md = m.get_all()
 
         rx, tx = RealtimeWebSocket.safeget((None, None), md, 'net-wwan0', 'bytes')

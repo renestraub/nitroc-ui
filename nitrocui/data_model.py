@@ -58,11 +58,11 @@ class Model(object):
         self.config = configparser.ConfigParser()
         try:
             self.config.read(CONF_FILE)
-            self.config.wwan_interface = self.config.get('WWAN', 'Interface')
-            self.config.wlan_interface = self.config.get('WLAN', 'Interface')
+            self.wwan_interface = self.config.get('WWAN', 'Interface')
+            self.wlan_interface = self.config.get('WLAN', 'Interface')
         except configparser.Error as e:
-            self.config.wwan_interface = 'wwan0'
-            self.config.wlan_interface = 'wlan0'
+            self.wwan_interface = 'wwan0'
+            self.wlan_interface = 'wlan0'
             logger.warning(f'ERROR: Cannot get config from {CONF_FILE}')
             logger.info(e)
 
@@ -260,14 +260,13 @@ class ModelWorker(threading.Thread):
 
     def _network(self):
         si = self.si
-        config = self.model.config
 
         info_wwan = dict()
-        info_wwan['bytes'] = si.ifinfo(config.wwan_interface) #  'wwan0')
+        info_wwan['bytes'] = si.ifinfo(self.model.wwan_interface)
         self.model.publish('net-wwan0', info_wwan)
 
         info_wlan = dict()
-        info_wlan['bytes'] = si.ifinfo(config.wlan_interface) # 'wlan0')
+        info_wlan['bytes'] = si.ifinfo(self.model.wlan_interface)
         self.model.publish('net-wlan0', info_wlan)
 
     def _modem_setup(self, m):

@@ -50,10 +50,6 @@ class SysInfoTC(SysInfoBase):
                 pass
             pos += 1
 
-    def version(self):
-        ver = self._tc1.version()
-        logger.info(f'MCP9600 id: {(ver>>4) & 0xF}.{(ver>>0) & 0xF}')
-
     def temp_tc(self, which):
         # print("checking TC")
         if self.present & (1 << which):

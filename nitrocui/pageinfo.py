@@ -2,8 +2,9 @@
 Main Page (Single Page)
 """
 import logging
-
 import tornado.web
+
+from typing import TypeVar, cast
 
 from ._version import __version__ as version
 from .data_model import Model
@@ -39,12 +40,14 @@ def nice(items, data, linebreak=False):
     return res
 
 
+T = TypeVar("T")
+
 class Data():
     def __init__(self, data):
         super().__init__()
         self._data = data
 
-    def get(self, default, *keys):
+    def get(self, default: T, *keys) -> T:
         dct = self._data
         for key in keys:
             try:
@@ -52,7 +55,7 @@ class Data():
             except KeyError as e:
                 logger.debug(f'cannot get {e}')
                 return default
-        return dct
+        return cast(T, dct)
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -68,6 +71,7 @@ class MainHandler(tornado.web.RequestHandler):
 
             # General System Information
             m = Model.instance
+            assert m
             md = m.get_all()
             d = Data(md)
 
@@ -103,10 +107,10 @@ class MainHandler(tornado.web.RequestHandler):
             a, b, c = d.get((0, 0, 0), 'sys-misc', 'load')
             tes.append(TE('Load', f'{a}, {b}, {c}'))
 
-            core1 = d.get((0, 0, 0), 'sys-misc', 'cpu1_freq') / 1000
-            core2 = d.get((0, 0, 0), 'sys-misc', 'cpu2_freq') / 1000
-            core3 = d.get((0, 0, 0), 'sys-misc', 'cpu3_freq') / 1000
-            core4 = d.get((0, 0, 0), 'sys-misc', 'cpu4_freq') / 1000
+            core1 = d.get(0, 'sys-misc', 'cpu1_freq')
+            core2 = d.get(0, 'sys-misc', 'cpu2_freq')
+            core3 = d.get(0, 'sys-misc', 'cpu3_freq')
+            core4 = d.get(0, 'sys-misc', 'cpu4_freq')
             tes.append(TE('CPU Frequency', f'{core1:.0f}, {core2:.0f}, {core3:.0f}, {core4:.0f} MHz'))
 
             tes.append(TE('<b>Temperatures</b>', ''))
@@ -136,6 +140,7 @@ class MainHandler(tornado.web.RequestHandler):
             temp = d.get(0, 'sys-misc', 'temp_nmcf4')
             if temp:
                 temp_str += f'4: {temp:.0f} °C'
+            temp_str = temp_str.rstrip(', ')
             tes.append(TE('NMCF', temp_str))
 
             temp_str = ""
@@ -148,6 +153,7 @@ class MainHandler(tornado.web.RequestHandler):
             temp = d.get(0, 'sys-misc', 'temp_phy3')
             if temp:
                 temp_str += f'3: {temp:.0f} °C'
+            temp_str = temp_str.rstrip(', ')
             if temp_str != "":
                 tes.append(TE('ETH PHY', temp_str))
 
@@ -181,6 +187,7 @@ class MainHandler(tornado.web.RequestHandler):
             temp = d.get(0, 'sys-misc', 'temp_tc8')
             if temp:
                 temp_str += f'8: {temp:.0f} °C, '
+            temp_str = temp_str.rstrip(', ')
             if temp_str != "":
                 tes.append(TE('Thermocouple', temp_str))
 
@@ -204,6 +211,7 @@ class MainHandler(tornado.web.RequestHandler):
             temp = d.get(0, 'sys-misc', 'temp_cp2')
             if temp:
                 temp_str += f'CP2: {temp:.0f} °C'
+            temp_str = temp_str.rstrip(', ')
             tes.append(TE('CPU/SB', temp_str))
 
             # v_in = md['sys-misc']['v_in']
@@ -233,6 +241,7 @@ class MainHandler(tornado.web.RequestHandler):
             temp = d.get(0, 'sys-misc', 'pwr_nmcf4')
             if temp:
                 temp_str += f'4: {temp:.1f} W'
+            temp_str = temp_str.rstrip(', ')
             tes.append(TE('NMCF', temp_str))
 
 

@@ -92,19 +92,20 @@ class SystemPowerdownHandler(tornado.web.RequestHandler):
 class CloudHandler(tornado.web.RequestHandler):
     def get(self):
         logger.warning('starting/stopping cloud logging service')
-        enable = self.get_query_argument('enable', False)
+        enable = self.get_query_argument('enable', 'False')
 
         things = Things.instance
+        assert things
         res = things.enable(enable == 'True')
         self.write(res)
 
 
 class GsmCellLocateHandler(tornado.web.RequestHandler):
     def get(self):
-        mcc = self.get_query_argument('mcc', 0)
-        mnc = self.get_query_argument('mnc', 0)
-        lac = self.get_query_argument('lac', 0)
-        cid = self.get_query_argument('cid', 0)
+        mcc = self.get_query_argument('mcc', '0')
+        mnc = self.get_query_argument('mnc', '0')
+        lac = self.get_query_argument('lac', '0')
+        cid = self.get_query_argument('cid', '0')
 
         logger.debug(f'cellinfo: mcc {mcc}, mnc {mnc}, lac {lac}, cid {cid}')
 

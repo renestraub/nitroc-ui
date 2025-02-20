@@ -64,6 +64,7 @@ class GnssPosition(threading.Thread):
 
     def _state_connected(self):
         try:
+            assert self.gps
             report = self.gps.next()
             if report:
                 self._handle_report(report)
@@ -80,6 +81,7 @@ class GnssPosition(threading.Thread):
         logger.warning('connection to gpsd lost')
         self.model.remove('gnss-pos')
 
+        assert self.gps
         self.gps.cleanup()
         self.gps = None
         self.state = 'init'

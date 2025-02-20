@@ -63,6 +63,7 @@ class Gpsd(threading.Thread):
             logger.debug('thread stopped')
 
             # Close socket
+            assert self.listen_sock
             self.listen_sock.close()
             self.listen_sock = None
 
@@ -85,6 +86,7 @@ class Gpsd(threading.Thread):
         """
         try:
             logger.debug('starting raw listener on gpsd')
+            assert self.listen_sock
             self.listen_sock.send(self.connect_msg)
             self.listen_sock.settimeout(0.25)
 

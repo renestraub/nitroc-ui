@@ -26,6 +26,7 @@ class TrafficHandler(tornado.web.RequestHandler):
 
             # General System Information
             m = Model.instance
+            assert m
             md = m.get_all()
 
             serial = md['sys-version']['serial']
