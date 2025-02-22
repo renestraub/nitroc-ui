@@ -96,6 +96,7 @@ class Things(threading.Thread):
             logger.info("service stopping")
             if self.active:
                 self._data_collector.disable()
+                self._req_listener.disable()
                 self.active = False
                 res = 'Stopped cloud logger'
             else:
