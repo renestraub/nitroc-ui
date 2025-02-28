@@ -130,6 +130,12 @@ class ModelWorker(threading.Thread):
         self.daemon = True
         self.name = 'model-worker'
 
+        # Check presence of required tools
+        if not SysInfoSensors.sensors_present():
+            logger.warn('System sensors not present, is the "sensors" tool available?')
+        if not CrosEcSensors.sensors_present():
+            logger.warn('EC sensors not present, is the "ectool" available?')
+
         self.si = SysInfoSensors()
         self.crosi = CrosEcSensors()
         self.sit = SysInfoThermal()
@@ -184,7 +190,7 @@ class ModelWorker(threading.Thread):
         ver = dict()
         ver['serial'] = si.serial()
         ver['sys'] = si.version()
-        ver['bl'] = si.bootloader_version()
+        ver['bl'] = crosi.bootloader_version()
         ver['hw'] = si.hw_version()
         self.model.publish('sys-version', ver)
 

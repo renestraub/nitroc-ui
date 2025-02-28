@@ -214,9 +214,10 @@ class MainHandler(tornado.web.RequestHandler):
             temp_str = temp_str.rstrip(', ')
             tes.append(TE('CPU/SB', temp_str))
 
-            # v_in = md['sys-misc']['v_in']
-            # v_rtc = md['sys-misc']['v_rtc']
-            # tes.append(TE('Voltages', f'Input: {v_in:.1f} V, RTC: {v_rtc:.2f} V'))
+            v_in = md['sys-misc']['v_in']
+            v_rtc = md['sys-misc']['v_rtc']
+            if v_in and v_rtc:
+                tes.append(TE('Voltages', f'Input: {v_in:.1f} V, RTC: {v_rtc:.2f} V'))
 
             tes.append(TE('<b>Power</b>', ''))
             temp_str = ""

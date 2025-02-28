@@ -12,16 +12,13 @@ class SysInfoSensors(SysInfoBase):
     BIN = '/usr/bin/sensors'
 
     @staticmethod
-    def sensors_present():
+    def sensors_present() -> bool:
         return path.exists(SysInfoSensors.BIN)
 
     def __init__(self):
         # TODO: Check Ethernet board variant?
         super().__init__()
 
-        self.data = None
-        self.volt_in = None
-        self.volt_rtc = None
         self.temp_mb1 = None
         self.temp_mb2 = None
         self.temp_eth = None
@@ -37,14 +34,13 @@ class SysInfoSensors(SysInfoBase):
         self.temp_nvm_sdd = None
         self.temp_wle3000 = None
 
-
-    def poll(self):
-        cp = subprocess.run([SysInfoSensors.BIN], stdout=subprocess.PIPE)
-        res = cp.stdout.decode().strip()
-        self.sensor_res = res
-
-        self.volt_in = '20.0' # self._extract('input-voltage')
-        self.volt_rtc = '3.0' # self._extract('rtc-voltage')
+    def poll(self) -> None:
+        try:
+            cp = subprocess.run([SysInfoSensors.BIN], stdout=subprocess.PIPE)
+            res = cp.stdout.decode().strip()
+            self.sensor_res = res
+        except FileNotFoundError:
+            self.sensor_res = ""
 
         self.temp_mb1 = self._extract('tmp1075-i2c-0-48', 'temp1')
         self.temp_mb2 = self._extract('tmp1075-i2c-0-49', 'temp1')
@@ -59,7 +55,7 @@ class SysInfoSensors(SysInfoBase):
         self.temp_phy2 = self._extract('f212a600.mdio_mii:09-mdio-9', 'temp1')
         self.temp_phy3 = self._extract('f212a600.mdio_mii:11-mdio-b', 'temp1')
 
-        # Averaged temperature of 1G ETH Switch
+        # Averaged temperature of 1GB ETH Switch
         phy_temps = 0
         phy_ids = [3, 4, 5, 6, 7]
         for phy_num in phy_ids:
@@ -77,63 +73,57 @@ class SysInfoSensors(SysInfoBase):
         self.temp_wle3000 = self._extract('ath11k_hwmon-pci.*', 'temp1')  # Find WLE3000 in any slot
         # print(f"wle3000 {self.temp_wle3000}")
 
-    def input_voltage(self):
-        return self.volt_in
+    # def input_voltage(self) -> float:
+    #     return self.volt_in
 
-    def rtc_voltage(self):
-        return self.volt_rtc
+    # def rtc_voltage(self) -> float:
+    #     return self.volt_rtc
 
-    def temperature_mb1_pcb(self):
+    def temperature_mb1_pcb(self) -> float | None:
         return self.temp_mb1
 
-    def temperature_mb2_pcb(self):
+    def temperature_mb2_pcb(self) -> float | None:
         return self.temp_mb2
 
-    def temperature_eth_pcb(self):
+    def temperature_eth_pcb(self) -> float | None:
         return self.temp_eth
 
-    def temperature_nmcf1_pcb(self):
+    def temperature_nmcf1_pcb(self) -> float | None:
         return self.temp_nmcf1
 
-    def temperature_nmcf2_pcb(self):
+    def temperature_nmcf2_pcb(self) -> float | None:
         return self.temp_nmcf2
 
-    def temperature_nmcf3_pcb(self):
+    def temperature_nmcf3_pcb(self) -> float | None:
         return self.temp_nmcf3
 
-    def temperature_nmcf4_pcb(self):
+    def temperature_nmcf4_pcb(self) -> float | None:
         return self.temp_nmcf4
 
-    def temperature_phy1(self):
+    def temperature_phy1(self) -> float | None:
         return self.temp_phy1
 
-    def temperature_phy2(self):
+    def temperature_phy2(self) -> float | None:
         return self.temp_phy2
 
-    def temperature_phy3(self):
+    def temperature_phy3(self) -> float | None:
         return self.temp_phy3
 
-    def temperature_eth_switch(self):
+    def temperature_eth_switch(self) -> float | None:
         return self.temp_eth_switch
 
-    def temperature_nvm_ssd(self):
+    def temperature_nvm_ssd(self) -> float | None:
         return self.temp_nvm_sdd
 
-    def temperature_wifi_wle3000(self):
+    def temperature_wifi_wle3000(self) -> float | None:
         return self.temp_wle3000
 
-    def _extract(self, sensor, token):
+    def _extract(self, sensor: str, token: str) -> float | None:
         regex = rf"{sensor}\nAdapter.*\n{token}:\s*([-+]?\d+.\d+)"
-        # match = re.search(regex, self.sensor_res, re.MULTILINE)
-        # print(len(match.groups()))
-        # print(match)
-        # if match and len(match.groups()) == 3:
-        #     return float(match.group(3))
-
         matches = re.finditer(regex, self.sensor_res, re.MULTILINE)
         for matchNum, match in enumerate(matches, start=1):
             # print ("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()))
             if len(match.groups()) == 1:
-                # groupNum = 1
                 # print ("Group {groupNum} found at {start}-{end}: {group}".format(groupNum = groupNum, start = match.start(groupNum), end = match.end(groupNum), group = match.group(groupNum)))
                 return float(match.group(1))
+        return None
