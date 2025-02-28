@@ -145,7 +145,7 @@ class NotImplementedHandler(tornado.web.RequestHandler):
 
 
 class RpcReboot(RpcRunner):
-    def run(self, _args: dict) -> bool:
+    def run(self, _args: str) -> bool:
         logger.warning('rebooting system in 5 seconds')
         threading.Thread(target=RpcReboot.do_reboot).start()
         return True
@@ -158,7 +158,7 @@ class RpcReboot(RpcRunner):
 
 
 class RpcPoweroff(RpcRunner):
-    def run(self, _args: dict) -> bool:
+    def run(self, _args: str) -> bool:
         logger.warning('powering down system in 5 seconds')
         threading.Thread(target=RpcPoweroff.do_poweroff).start()
         return True
@@ -171,29 +171,16 @@ class RpcPoweroff(RpcRunner):
 
 
 class RpcLED(RpcRunner):
-    def run(self, args: dict) -> bool:
-        colors = {
-            "off": "0 0 0",
-            "red": "100 0 0",
-            "green": "0 100 0",
-            "blue": "0 0 100",
-        }
+    def __init__(self, method, model):
+        super().__init__(method)
+        self.model = model
 
-        if args in colors:
-            rgb_color = colors[args]
-            logger.info(f"setting LED to {rgb_color}")
-
-            rgb_path = r'/sys/class/leds/chromeos:multicolor:power/multi_intensity'
-            with open(rgb_path, 'w') as f:
-                f.write(rgb_color)
-
-            brightness_path = r'/sys/class/leds/chromeos:multicolor:power/brightness'
-            with open(brightness_path, 'w') as f:
-                f.write("100")
-
+    def run(self, args: str) -> bool:
+        COLORS = {"off", "red", "green", "blue", "white"}
+        if args in COLORS:
+            self.model.indicator(args)
             return True
         else:
-            logger.info(f"unsupported color {args}")
             return False
 
 
@@ -214,7 +201,7 @@ def run_server(port=80):
     things.setup()
     things.register_rpc(RpcReboot("reboot"))
     things.register_rpc(RpcPoweroff("poweroff"))
-    things.register_rpc(RpcLED("led"))
+    things.register_rpc(RpcLED("led", model))
 
     # Start cloud logging by default
     things.enable(True)

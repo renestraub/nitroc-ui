@@ -18,7 +18,7 @@ import platform
 import threading
 import time
 
-from .led import LED_BiColor
+from .led import LED_RGB
 from .mm import MM
 from .sysinfo_thermal import SysInfoThermal
 from .sysinfo_tc import SysInfoTC
@@ -51,8 +51,8 @@ class Model(object):
         self.data = dict()
         self.data['watermark'] = dict()
 
-        self.led_ind = LED_BiColor('/sys/class/leds/ind')
-        self.led_stat = LED_BiColor('/sys/class/leds/status')
+        self.led_color = "green"
+        self.system_led = LED_RGB()
         self.cnt = 0
 
         self.config = configparser.ConfigParser()
@@ -67,8 +67,7 @@ class Model(object):
             logger.info(e)
 
     def setup(self):
-        self.led_stat.green()
-        self.led_ind.green()
+        self.system_led.color(self.led_color)
 
         self.worker.setup()
 
@@ -94,9 +93,11 @@ class Model(object):
 
             if origin == 'things':
                 if value['state'] == 'sending':
-                    self.led_ind.yellow()
+                    # Set LED to yellow, while transmitting
+                    self.system_led.yellow()
                 else:
-                    self.led_ind.green()
+                    # Revert back to user defined color
+                    self.system_led.color(self.led_color)
             elif origin == 'modem':
                 if 'bearer-uptime' in value:
                     self._watermark('bearer-uptime', value['bearer-uptime'])
@@ -116,6 +117,10 @@ class Model(object):
         if curr is None or value > curr:
             self.data['watermark'][topic] = value
             logger.debug(f'new watermark for {topic} = {value}')
+
+    def indicator(self, color: str) -> None:
+        self.led_color = color
+        self.system_led.color(self.led_color)
 
 
 class ModelWorker(threading.Thread):

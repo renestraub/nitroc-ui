@@ -724,7 +724,7 @@ class RpcRunner(ABC):
         self.method = method
     
     @abstractmethod
-    def run(self):
+    def run(self, params):
         """
         Abstract method that must be implemented by derived classes.
         This method is responsible for executing the RPC logic.

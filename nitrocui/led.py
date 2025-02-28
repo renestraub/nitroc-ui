@@ -1,31 +1,55 @@
+import os
 
-class LED_BiColor():
-    def __init__(self, path):
+class LED_RGB():
+    COLORS = {
+        "off": "0 0 0",
+        "red": "100 0 0",
+        "green": "0 100 0",
+        "blue": "0 0 100",
+        "yellow": "100 10 0",
+        "white": "100 100 100",
+    }
+
+    # Possible LED locations
+    LED_PATHS = [
+        "/sys/class/leds/ec:power/",
+        "/sys/class/leds/chromeos:multicolor:power/",
+    ]
+
+    def __init__(self):
         super().__init__()
-        self._green_path = path + ':green/brightness'
-        self._red_path = path + ':red/brightness'
 
-    def off(self):
-        self._set(False, False)
+        # Determine the correct LED path by checking existence
+        self.led_path = next((path for path in LED_RGB.LED_PATHS if os.path.exists(path)), None)
+        if self.led_path:
+            self.rgb_path = self.led_path + "multi_intensity"
+            self.brightness_path = self.led_path + "brightness"
+        else:
+            self.rgb_path = None
+            self.brightness_path = None
 
-    def red(self):
-        self._set(True, False)
+    def off(self) -> None:
+        self._set("off")
 
-    def yellow(self):
-        self._set(True, True)
+    def red(self) -> None:
+        self._set("red")
 
-    def green(self):
-        self._set(False, True)
+    def yellow(self) -> None:
+        self._set("yellow")
 
-    def _set(self, red, green):
-        pass
-        # print(f'set led {red} {green}')
+    def green(self) -> None:
+        self._set("green")
 
-        # red_str = '1' if red else '0'
-        # green_str = '1' if green else '0'
+    def color(self, name) -> None:
+        self._set(name)
 
-        # with open(self._red_path, 'w+') as f:
-        #     f.write(red_str)
+    def _set(self, color) -> None:
+        if color in LED_RGB.COLORS:
+            rgb_color = LED_RGB.COLORS[color]
 
-        # with open(self._green_path, 'w+') as f:
-        #     f.write(green_str)
+            if self.rgb_path:
+                with open(self.rgb_path, 'w') as f:
+                    f.write(rgb_color)
+            if self.brightness_path:
+                with open(self.brightness_path, 'w') as f:
+                    f.write("100")
