@@ -235,7 +235,7 @@ def run_server(port=80):
         (r"/do_gnss_coldstart", GnssColdStartHandler),
 
         (r"/ws_realtime", RealtimeWebSocket),
-    ], **settings)
+    ], **settings) # type: ignore
 
     # logging.getLogger("tornado.access").setLevel(logging.DEBUG)
     # logging.getLogger("tornado.application").setLevel(logging.DEBUG)
