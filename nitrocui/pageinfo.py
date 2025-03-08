@@ -250,6 +250,9 @@ class MainHandler(tornado.web.RequestHandler):
             tes.append(TE('', ''))
             tes.append(TE('<b>Network</b>', ''))
 
+            inet_access = d.get('unknown', 'network', 'inet-conn')
+            tes.append(TE('internet', inet_access))
+
             rx, tx = d.get((None, None), 'net-wwan0', 'bytes')
             if rx and tx:
                 rx = int(rx) / 1000000

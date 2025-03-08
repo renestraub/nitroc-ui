@@ -2,6 +2,9 @@ import ipaddress
 import subprocess
 
 
+NMCLI_BIN = '/usr/bin/nmcli'
+
+
 def secs_to_hhmm(secs):
     t = int((secs + 30) / 60)
     h = int(t / 60)
@@ -16,11 +19,30 @@ def secs_to_hhmm(secs):
 #     return res
 
 
-def nmcli_c():
-    cp = subprocess.run(['/usr/bin/nmcli', 'c'], stdout=subprocess.PIPE)
-    res = cp.stdout.decode()
+# def nmcli_c():
+#     cp = subprocess.run([NMCLI_BIN, 'c'], stdout=subprocess.PIPE)
+#     res = cp.stdout.decode()
 
-    return res
+#     return res
+
+
+def nmcli_network_check():
+    """
+    Check level of internet access
+
+    returns:
+    full: You have internet access.
+    limited: You have a network connection but no full internet access.
+    portal: The connection is behind a captive portal (e.g., hotel WiFi login page).
+    none: No network connectivity.
+    unknown: The status is not known.    
+    """
+    cp = subprocess.run([NMCLI_BIN, 'networking', 'connectivity', 'check'], stdout=subprocess.PIPE)
+    if cp.returncode == 0:
+        res = cp.stdout.decode().strip()
+        return res
+    else:
+        return 'unknown'
 
 
 def is_valid_ipv4(address):

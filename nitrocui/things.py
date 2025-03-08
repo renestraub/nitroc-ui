@@ -113,7 +113,7 @@ class Things(threading.Thread):
 
                 if self.state == 'init':
                     if self._have_bearer():
-                        logger.info('bearer found')
+                        logger.info('internet connectivity established')
 
                         self._req_listener.enable()
                         self.counter = 0
@@ -121,7 +121,7 @@ class Things(threading.Thread):
 
                 elif self.state == 'connected':
                     if not self._have_bearer():
-                        logger.warning('lost IP connection')
+                        logger.warning('lost internet connectivity')
 
                         self._req_listener.disable()
                         next_state = 'init'
@@ -145,10 +145,10 @@ class Things(threading.Thread):
             time.sleep(1.0)
 
     def _have_bearer(self):
-        info = self.model.get('modem')
-        if info and 'bearer-id' in info and 'bearer-ip' in info:
-            bearer_ip = info['bearer-ip']
-            if is_valid_ipv4(bearer_ip):
+        info = self.model.get('network')
+        if info and 'inet-conn' in info:
+            conn_state = info['inet-conn']
+            if conn_state == 'full':
                 return True
 
     def _upload_telemetry(self):

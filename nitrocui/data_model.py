@@ -26,6 +26,7 @@ from .sysinfo_sensors import SysInfoSensors
 from .sysinfo_power import SysInfoPower
 from .crosec_sensors import CrosEcSensors
 from .vnstat import VnStat
+from .tools import nmcli_network_check
 
 
 CONF_FILE = '/etc/nitrocui.conf'
@@ -271,6 +272,11 @@ class ModelWorker(threading.Thread):
 
     def _network(self):
         si = self.si
+
+        info_net = dict()
+        conn_state = nmcli_network_check()
+        info_net['inet-conn'] = conn_state
+        self.model.publish('network', info_net)
 
         info_wwan = dict()
         info_wwan['bytes'] = si.ifinfo(self.model.wwan_interface)
