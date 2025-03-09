@@ -18,8 +18,17 @@ class TE(object):
     Table Element to be displayed in info.tpl
     """
     def __init__(self, header, text):
-        self.header = header
+        self.header = '&nbsp;&nbsp;' + header
         self.text = text
+
+
+class TH(object):
+    """
+    Table Element to be displayed in info.tpl
+    """
+    def __init__(self, header):
+        self.header = '<b>' + header + '</b>'
+        self.text = '' 
 
 
 def nice(items, data, linebreak=False):
@@ -78,7 +87,6 @@ class MainHandler(tornado.web.RequestHandler):
             cloud_log_state = md['cloud']
             serial = d.get('N/A', 'sys-version', 'serial')
 
-            # tes.append(TE('<b>System</b>', ''))
             text = nice([('sys', 'System', ''),
                         ('bl', 'Bootloader', ''),
                         ('hw', 'Hardware', '')],
@@ -113,7 +121,7 @@ class MainHandler(tornado.web.RequestHandler):
             core4 = d.get(0, 'sys-misc', 'cpu4_freq')
             tes.append(TE('CPU Frequency', f'{core1:.0f}, {core2:.0f}, {core3:.0f}, {core4:.0f} MHz'))
 
-            tes.append(TE('<b>Temperatures</b>', ''))
+            tes.append(TH('Temperatures'))
 
             temp_str = ""
             temp = d.get(0, 'sys-misc', 'temp_mb')
@@ -219,7 +227,7 @@ class MainHandler(tornado.web.RequestHandler):
             if v_in and v_rtc:
                 tes.append(TE('Voltages', f'Input: {v_in:.1f} V, RTC: {v_rtc:.2f} V'))
 
-            tes.append(TE('<b>Power</b>', ''))
+            tes.append(TH('Power'))
             temp_str = ""
             temp = d.get(0, 'sys-misc', 'pwr_mb')
             if temp:
@@ -248,7 +256,7 @@ class MainHandler(tornado.web.RequestHandler):
 
             # Network Information
             tes.append(TE('', ''))
-            tes.append(TE('<b>Network</b>', ''))
+            tes.append(TH('Network'))
 
             inet_access = d.get('unknown', 'network', 'inet-conn')
             tes.append(TE('internet', inet_access))
@@ -269,7 +277,7 @@ class MainHandler(tornado.web.RequestHandler):
             mi = md['modem']
             if 'modem-id' in mi:
                 tes.append(TE('', ''))
-                tes.append(TE('<b>Mobile</b>', ''))
+                tes.append(TH('Mobile'))
 
                 tes.append(TE('Modem Id', mi['modem-id']))
 
@@ -337,7 +345,6 @@ class MainHandler(tornado.web.RequestHandler):
                     tes.append(TE('Signal UMTS', text))
 
                 if 'bearer-id' in mi:
-                    tes.append(TE('', ''))
                     tes.append(TE('Bearer Id', mi['bearer-id']))
 
                     if 'bearer-uptime' in mi:
@@ -366,7 +373,6 @@ class MainHandler(tornado.web.RequestHandler):
                             tes.append(TE('Ping', f'{delay_in_ms:.0f} ms'))
 
                 if 'sim-id' in mi:
-                    tes.append(TE('', ''))
                     tes.append(TE('SIM Id', mi['sim-id']))
                     tes.append(TE('IMSI', mi['sim-imsi']))
                     tes.append(TE('ICCID', mi['sim-iccid']))
@@ -378,7 +384,7 @@ class MainHandler(tornado.web.RequestHandler):
             # GNSS
             if 'gnss-pos' in md:
                 tes.append(TE('', ''))
-                tes.append(TE('<b>GNSS</b>', ''))
+                tes.append(TH('GNSS'))
 
                 pos = md['gnss-pos']
                 tes.append(TE('Fix', pos['fix']))
@@ -390,15 +396,9 @@ class MainHandler(tornado.web.RequestHandler):
             # OBD-II
             if 'obd2' in md:
                 tes.append(TE('', ''))
-                tes.append(TE('<b>OBD-II</b>', ''))
+                tes.append(TH('OBD-II'))
                 speed = md['obd2']['speed']
                 tes.append(TE('Speed', f'{speed/3.60:.0f} m/s, {speed:.0f} km/h'))
-
-            if 'phy-broadr0' in md:
-                state = md['phy-broadr0']
-                tes.append(TE('', ''))
-                tes.append(TE('<b>100BASE-T1</b>', ''))
-                tes.append(TE('BroadR0', f'{state["state"]}, {state["quality"]} %'))
 
             self.render('main.html',
                         title=f'{serial}',
