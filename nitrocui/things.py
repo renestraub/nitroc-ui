@@ -32,8 +32,15 @@ class Things(threading.Thread):
     # Singleton accessor
     instance = None
 
-    # Upload every 15 seconds
+    # Upload attributes immediately if data is present
+    ATTRIBUTES_UPLOAD_PERIOD = 1
+    ATTRIBUTES_UPLOAD_PHASE = 0
+    assert ATTRIBUTES_UPLOAD_PHASE < ATTRIBUTES_UPLOAD_PERIOD
+
+    # Upload telemetry every 15 seconds to reduce the network traffic
     TELEMETRY_UPLOAD_PERIOD = 15
+    TELEMETRY_UPLOAD_PHASE = 5
+    assert TELEMETRY_UPLOAD_PHASE < TELEMETRY_UPLOAD_PERIOD
 
     # Upload at most 120 entries. Assuming around 100 bytes per entry,
     # this makes 12 kBytes.
@@ -69,6 +76,9 @@ class Things(threading.Thread):
         self._data_queue = TransmitQueue(self.MAX_QUEUE_SIZE)
         self._data_collector = ThingsDataCollector(model, self._data_queue, self._attributes_queue)
         self._req_listener = ThingsRequestListener(self)
+
+        self.attributes_period = Things.ATTRIBUTES_UPLOAD_PERIOD
+        self.telemetry_period = Things.TELEMETRY_UPLOAD_PERIOD
 
     def setup(self):
         self.daemon = True
@@ -117,6 +127,8 @@ class Things(threading.Thread):
 
                         self._req_listener.enable()
                         self.counter = 0
+                        self.attributes_period = Things.ATTRIBUTES_UPLOAD_PERIOD
+                        self.telemetry_period = Things.TELEMETRY_UPLOAD_PERIOD
                         next_state = 'connected'
 
                 elif self.state == 'connected':
@@ -126,14 +138,24 @@ class Things(threading.Thread):
                         self._req_listener.disable()
                         next_state = 'init'
                     else:
-                        # Upload any pending attributes, one per second
-                        self._upload_attributes()
+                        # Upload any pending attributes
+                        # Assumes infrequent updates, but low latency wanted
+                        if self.counter % self.attributes_period == Things.ATTRIBUTES_UPLOAD_PHASE:
+                            res = self._upload_attributes()
+                            if res:
+                                self.attributes_period = Things.ATTRIBUTES_UPLOAD_PERIOD
+                            else:
+                                # Upload error, try again in 30 seconds
+                                self.attributes_period = 30 
 
                         # Upload pending telemetry as batch every some seconds
-                        if self.counter % Things.TELEMETRY_UPLOAD_PERIOD == 5:
-                            self._upload_telemetry()
-
-                        # TODO: check for errors
+                        if self.counter % self.telemetry_period == Things.TELEMETRY_UPLOAD_PHASE:
+                            res = self._upload_telemetry()
+                            if res:
+                                self.telemetry_period = Things.TELEMETRY_UPLOAD_PERIOD
+                            else:
+                                # Upload error, throttle regular interval by x 4
+                                self.telemetry_period = Things.TELEMETRY_UPLOAD_PERIOD * 4
 
                 # state change
                 if self.state != next_state:
@@ -144,14 +166,15 @@ class Things(threading.Thread):
 
             time.sleep(1.0)
 
-    def _have_bearer(self):
+    def _have_bearer(self) -> bool:
         info = self.model.get('network')
         if info and 'inet-conn' in info:
             conn_state = info['inet-conn']
             if conn_state == 'full':
                 return True
+        return False
 
-    def _upload_telemetry(self):
+    def _upload_telemetry(self) -> bool:
         """
         Sends telemtry data
 
@@ -159,6 +182,7 @@ class Things(threading.Thread):
         TELEMETRY_MAX_ITEMS_TO_UPLOAD entries and tries to upload them. If upload is ok,
         removes entries from queue. Otherwise leaves entries for next try.
         """
+        res = False
 
         # Are there any entries at all?
         queue_entries = self._data_queue.num_entries()
@@ -187,13 +211,18 @@ class Things(threading.Thread):
                 logger.warning('could not upload telemetry data, keeping in queue')
                 logger.warning(f'{queue_entries} entries in queue')
 
-    def _upload_attributes(self):
+        return res
+
+    def _upload_attributes(self) -> bool:
         """
         Upload a single attribute entry.
 
         Assumes all attributes are in one entry
         TODO: Rework to allow more than one entry, combine code with _upload_telemetry
         """
+        res = False
+
+        # if (queue_entries := self._data_queue.num_entries()) >= 1:
         if self._attributes_queue.num_entries() >= 1:
             entry = self._attributes_queue.all_entries()[0]
             post_data = entry['data']
@@ -205,7 +234,9 @@ class Things(threading.Thread):
             else:
                 logger.warning('could not upload attribute data, keeping in queue')
 
-    def _post_data(self, msgtype, payload, id = 0):
+        return res
+
+    def _post_data(self, msgtype: str, payload, id = 0) -> bool:
         """
         Sends data with HTTP(S) POST request to Thingsboard server
 
@@ -650,6 +681,7 @@ class ThingsRequestListener(threading.Thread):
             # logger.warning("RPC request loop")
 
             # Check for events from other threads
+            # Depending on state do a quick peek (delay = 0) or delay to throttle thread
             try:
                 msg = self.q.get(timeout = delay)
                 if msg == 'start':
@@ -688,10 +720,12 @@ class ThingsRequestListener(threading.Thread):
                             self.dispatch(request)
                         else:
                             logger.info(f"illegal RPC request format")
+                    delay = 0.0
                 except Timeout:
                     logger.debug("RPC request timeout")
                 except RequestException:
                     logger.warning("RPC request exception")
+                    delay = 5.0
         
     def dispatch(self, request):
         success = False
