@@ -46,11 +46,14 @@ def format_size(bytes: int) -> str:
     :param bytes: The size in bytes.
     :return: A formatted string representing the size.
     """
-    GB = 1024*1024*1024
+    KB = 1024
     MB = 1024*1024
-    KB = 1024*1024
+    GB = 1024*1024*1024
+    TB = 1024*1024*1024*1024
 
-    if bytes >= GB:
+    if bytes >= TB:
+        return f"{bytes / TB:.2f} TB"
+    elif bytes >= GB:
         return f"{bytes / GB:.2f} GB"
     elif bytes >= MB:
         return f"{bytes / MB:.2f} MB"

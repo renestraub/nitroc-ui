@@ -5,7 +5,7 @@ import logging
 import tornado.web
 
 from ._version import __version__ as version
-from .data_model import Model, ModelData
+from .data_model import Model
 from .tools import secs_to_hhmm, format_size, format_frequency
 
 logger = logging.getLogger('nitroc-ui')
