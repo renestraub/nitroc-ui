@@ -12,20 +12,6 @@ def secs_to_hhmm(secs):
     return h, m
 
 
-# def ping(ip):
-#     cp = subprocess.run(['/usr/bin/ping', '-c', '4', ip], stdout=subprocess.PIPE)
-#     res = cp.stdout.decode()
-
-#     return res
-
-
-# def nmcli_c():
-#     cp = subprocess.run([NMCLI_BIN, 'c'], stdout=subprocess.PIPE)
-#     res = cp.stdout.decode()
-
-#     return res
-
-
 def nmcli_network_check():
     """
     Check level of internet access
@@ -60,12 +46,16 @@ def format_size(bytes: int) -> str:
     :param bytes: The size in bytes.
     :return: A formatted string representing the size.
     """
-    if bytes >= 1_000_000_000:
-        return f"{bytes / 1_000_000_000:.2f} GB"
-    elif bytes >= 1_000_000:
-        return f"{bytes / 1_000_000:.2f} MB"
-    elif bytes >= 1_000:
-        return f"{bytes / 1_000:.2f} KB"
+    GB = 1024*1024*1024
+    MB = 1024*1024
+    KB = 1024*1024
+
+    if bytes >= GB:
+        return f"{bytes / GB:.2f} GB"
+    elif bytes >= MB:
+        return f"{bytes / MB:.2f} MB"
+    elif bytes >= KB:
+        return f"{bytes / KB:.2f} KB"
     else:
         return f"{bytes} Bytes"
 
@@ -81,5 +71,7 @@ def format_frequency(hz: int) -> str:
         return f"{hz / 1_000_000_000:.1f} GHz"
     elif hz >= 1_000_000:
         return f"{hz / 1_000_000:.0f} MHz"
+    elif hz >= 1_000:
+        return f"{hz / 1_000:.0f} kHz"
     else:
         return f"{hz} Hz"
