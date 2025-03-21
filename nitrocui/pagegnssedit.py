@@ -21,8 +21,9 @@ class GnssEditHandler(tornado.web.RequestHandler):
         try:
             # General System Information
             m = Model.instance
+            assert m
             md = m.get_all()
-            serial = md['sys-version']['serial']
+            serial = md.get('-', 'sys-version', 'serial')
 
             # Get GNSS config file
             try:
@@ -50,16 +51,17 @@ class GnssSaveHandler(tornado.web.RequestHandler):
         gnss_cfg = self.get_argument('config', None)
 
         res = ''
-        try:
-            # TODO: Create backup file and save new config
+        if gnss_cfg:
+            try:
+                # TODO: Create backup file and save new config
 
-            with open(CONFIG_FILE, 'w') as f:
-                f.write(gnss_cfg)
+                with open(CONFIG_FILE, 'w') as f:
+                    f.write(gnss_cfg)
 
-            res = 'File succesfully written'
-        except FileNotFoundError:
-            logger.warning(f'cannot find {CONFIG_FILE}')
-            res = 'Cannot write file'
+                res = 'File succesfully written'
+            except FileNotFoundError:
+                logger.warning(f'cannot find {CONFIG_FILE}')
+                res = 'Cannot write file'
 
         self.write(res)
 

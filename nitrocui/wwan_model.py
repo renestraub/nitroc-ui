@@ -67,7 +67,7 @@ class GsmWorker(threading.Thread):
                 else:
                     if self.counter % 5 == 2:
                         try:
-                            delay = ping(PING_HOST, timeout=1.0)
+                            delay = ping(PING_HOST, timeout=1)
                             if delay:
                                 link_data['delay'] = round(float(delay), 3)
                             else:
@@ -86,9 +86,9 @@ class GsmWorker(threading.Thread):
             self.counter += 1
             time.sleep(1.0)
 
-    def _have_bearer(self):
-        info = self.model.get('modem')
-        if info and 'bearer-id' in info and 'bearer-ip' in info:
-            bearer_ip = info['bearer-ip']
-            if is_valid_ipv4(bearer_ip):
-                return True
+    def _have_bearer(self) -> bool:
+        if (mi := self.model.get_section('modem')):
+            if (bearer_ip := mi.get('', 'bearer-ip')) != '':
+                if is_valid_ipv4(bearer_ip):
+                    return True
+        return False

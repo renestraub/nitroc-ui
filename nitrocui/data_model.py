@@ -17,6 +17,7 @@ import logging
 import platform
 import threading
 import time
+from typing import TypeVar, cast
 
 from .led import LED_RGB
 from .mm import MM
@@ -33,6 +34,63 @@ CONF_FILE = '/etc/nitrocui.conf'
 
 
 logger = logging.getLogger('nitroc-ui')
+
+
+T = TypeVar("T")
+
+class ModelData():
+    def __init__(self, data):
+        super().__init__()
+        self._data = data
+
+    def __contains__(self, key):
+        return key in self._data  # Enables `key in obj`
+
+    def __getitem__(self, key):
+        return self._data[key]  # Raises KeyError if key is missing
+
+    def get(self, default: T, *keys) -> T:
+        """
+        Safely retrieve a value from a nested dictionary.
+
+        :param default: The default value if keys are not found.
+        :param keys: The sequence of keys to access the value.
+        :return: The value if found, otherwise the default.
+        """
+        try:
+            res = self._navigate_dict(*keys)
+            return cast(T, res)
+        except KeyError as e:
+            logger.debug(f'cannot get {e}')
+            return default
+
+    # TODO: get_setion() method?
+
+    def exists(self, *keys) -> bool:
+        """
+        Check if a nested key path exists in the dictionary.
+        
+        :param keys: The sequence of keys to check.
+        :return: True if the path exists, otherwise False.
+        """
+        try:
+            self._navigate_dict(*keys)
+            return True
+        except KeyError:
+            return False
+
+    def _navigate_dict(self, *keys) -> dict:
+        """
+        Navigate through a nested dictionary using keys.
+        
+        :param dct: The dictionary to navigate.
+        :param keys: The sequence of keys to access the nested value.
+        :return: The final value if all keys exist, else raises KeyError.
+        """
+        dct = self._data
+        for key in keys:
+            dct = dct[key]  # May raise KeyError
+        return dct
 
 
 class Model(object):
@@ -72,14 +130,14 @@ class Model(object):
 
         self.worker.setup()
 
-    def get_all(self):
+    def get_all(self) -> ModelData:
         with self.lock:
-            return self.data
+            return ModelData(self.data)
 
-    def get(self, origin):
+    def get_section(self, origin) -> (ModelData | None):
         with self.lock:
             if origin in self.data:
-                return self.data[origin]
+                return ModelData(self.data[origin])
 
     def publish(self, origin, value):
         """
@@ -159,9 +217,6 @@ class ModelWorker(threading.Thread):
 
             if cnt == 0 or cnt % 4 == 2:
                 self._network()
-
-            # if cnt == 0 or cnt % 4 == 3:
-            #     self._100base_t1()
 
             if cnt == 0 or cnt % 4 == 2:
                 self._modem()

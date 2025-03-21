@@ -167,7 +167,7 @@ class Things(threading.Thread):
             time.sleep(1.0)
 
     def _have_bearer(self) -> bool:
-        info = self.model.get('network')
+        info = self.model.get_section('network')
         if info and 'inet-conn' in info:
             conn_state = info['inet-conn']
             if conn_state == 'full':
@@ -373,11 +373,11 @@ class ThingsDataCollector(threading.Thread):
             # Still starting up, data not yet available
             return
 
-        os_version = md['sys-version']['sys']
-        serial = md['sys-version']['serial']
-        hw_ver = md['sys-version']['hw']
+        os_version = md.get('n/a', 'sys-version','sys')
+        serial = md.get('n/a', 'sys-version', 'serial')
+        hw_ver = md.get('n/a', 'sys-version', 'hw')
         # bootloader_ver = md['sys-version']['bl']
-        uptime = md['sys-datetime']['uptime']
+        uptime = md.get('n/a', 'sys-datetime', 'uptime')
         attrs = {
             "serial": serial,
             "os-version": os_version,
@@ -417,13 +417,10 @@ class ThingsDataCollector(threading.Thread):
     def _info(self, md):
         telemetry = dict()
         if 'sys-misc' in md:
-            # TODO: Create table and iterate over it
             info = md['sys-misc']
             telemetry['cpu-load'] = info['load'][0]
-            telemetry['cpu1-freq'] = info['cpu1_freq']
-            telemetry['cpu2-freq'] = info['cpu2_freq']
-            telemetry['cpu3-freq'] = info['cpu3_freq']
-            telemetry['cpu4-freq'] = info['cpu4_freq']
+            for i in range(1, 4+1):
+                telemetry[f'cpu{i}-freq'] = info[f'cpu{i}_freq']
 
             telemetry['voltage-in'] = info['v_in']
             telemetry['mem-free'] = info['mem'][1]
@@ -431,21 +428,14 @@ class ThingsDataCollector(threading.Thread):
             telemetry['temp-pcb-main1'] = info['temp_mb']  # TODO: rename to temp-pcb-mb-dcdc?
             telemetry['temp-pcb-main2'] = info['temp_mb2']  # TODO: rename to temp-pcb-mb-peri? 
             telemetry['temp-pcb-eth'] = info['temp_eth']
-            if info['temp_nmcf1']:
-                telemetry['temp-pcb-nmcf1'] = info['temp_nmcf1']
-            if info['temp_nmcf2']:
-                telemetry['temp-pcb-nmcf2'] = info['temp_nmcf2']
-            if info['temp_nmcf3']:
-                telemetry['temp-pcb-nmcf3'] = info['temp_nmcf3']
-            if info['temp_nmcf4']:
-                telemetry['temp-pcb-nmcf4'] = info['temp_nmcf4']
+            for i in range(1, 4+1):
+                if info[f'temp_nmcf{i}']:
+                    telemetry[f'temp-pcb-nmcf{i}'] = info[f'temp_nmcf{i}']
 
-            if info['temp_phy1']:
-                telemetry['temp-ic-phy1'] = info['temp_phy1']
-            if info['temp_phy2']:
-                telemetry['temp-ic-phy2'] = info['temp_phy2']
-            if info['temp_phy3']:
-                telemetry['temp-ic-phy3'] = info['temp_phy3']
+            for i in range(1, 3+1):
+                if info[f'temp_phy{i}']:
+                    telemetry[f'temp-ic-phy1{i}'] = info[f'temp_phy{i}']
+
             if info['temp_eth_switch']:
                 telemetry['temp-eth-switch'] = info['temp_eth_switch']
                 # TODO: rename to temp-ic-eth-switch?
@@ -453,26 +443,11 @@ class ThingsDataCollector(threading.Thread):
             if info['temp_nvm_ssd']:
                 telemetry['temp-nvm-ssd'] = info['temp_nvm_ssd']
             if info['temp_wifi_wle3000']:
-                # print(f"wifi {info['temp_wifi_wle3000']}")
                 telemetry['temp-wle3000-1'] = info['temp_wifi_wle3000']
 
-            # TODO: For loop
-            if info['temp_tc1']:
-                telemetry['temp-tc1'] = info['temp_tc1']
-            if info['temp_tc2']:
-                telemetry['temp-tc2'] = info['temp_tc2']
-            if info['temp_tc3']:
-                telemetry['temp-tc3'] = info['temp_tc3']
-            if info['temp_tc4']:
-                telemetry['temp-tc4'] = info['temp_tc4']
-            if info['temp_tc5']:
-                telemetry['temp-tc5'] = info['temp_tc5']
-            if info['temp_tc6']:
-                telemetry['temp-tc6'] = info['temp_tc6']
-            if info['temp_tc7']:
-                telemetry['temp-tc7'] = info['temp_tc7']
-            # if info['temp_tc8']:
-            #     telemetry['temp-tc8'] = info['temp_tc8']
+            for i in range(1, 7+1):
+                if info[f'temp_tc{i}']:
+                    telemetry[f'temp-tc{i}'] = info[f'temp_tc{i}']
 
             telemetry['temp-ic-ap'] = info['temp_ap']
             telemetry['temp-ic-cp0'] = info['temp_cp0']
@@ -491,22 +466,11 @@ class ThingsDataCollector(threading.Thread):
             # print(info['pwr_nmcf2'])
             # print(info['pwr_nmcf3'])
             # print(info['pwr_nmcf4'])
-            if info['pwr_nmcf1']:
-                telemetry['pwr-nmcf1'] = info['pwr_nmcf1']
-            else:
-                telemetry['pwr-nmcf1'] = 0
-            if info['pwr_nmcf2']:
-                telemetry['pwr-nmcf2'] = info['pwr_nmcf2']
-            else:
-                telemetry['pwr-nmcf2'] = 0
-            if info['pwr_nmcf3']:
-                telemetry['pwr-nmcf3'] = info['pwr_nmcf3']
-            else:
-                telemetry['pwr-nmcf3'] = 0
-            if info['pwr_nmcf4']:
-                telemetry['pwr-nmcf4'] = info['pwr_nmcf4']
-            else:
-                telemetry['pwr-nmcf4'] = 0
+            for i in range(1, 4+1):
+                if info[f'pwr_nmcf{i}']:
+                    telemetry[f'pwr-nmcf{i}'] = info[f'pwr_nmcf{i}']
+                else:
+                    telemetry[f'pwr-nmcf{i}'] = 0
 
         if 'link' in md:
             info = md['link']
@@ -559,11 +523,6 @@ class ThingsDataCollector(threading.Thread):
             (rx, tx) = info['bytes']
             telemetry['wlan0-rx'] = f'{rx}'
             telemetry['wlan0-tx'] = f'{tx}'
-
-        # if 'phy-broadr0' in md:
-        #     info = md['phy-broadr0']
-        #     quality = info['quality']
-        #     telemetry['broadr0-quality'] = f'{quality}'
 
         if len(telemetry) > 0:
             self._data_queue.add(telemetry)
