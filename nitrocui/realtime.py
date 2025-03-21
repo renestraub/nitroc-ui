@@ -6,13 +6,34 @@ using a websocket
 """
 import logging
 
+from typing import TypeVar, cast
+
 import tornado.web
 import tornado.websocket
 
 from ._version import __version__ as version
 from .data_model import Model
+from .tools import format_size
 
 logger = logging.getLogger('nitroc-ui')
+
+
+T = TypeVar("T")
+
+class Data():
+    def __init__(self, data):
+        super().__init__()
+        self._data = data
+
+    def get(self, default: T, *keys) -> T:
+        dct = self._data
+        for key in keys:
+            try:
+                dct = dct[key]
+            except KeyError as e:
+                logger.debug(f'cannot get {e}')
+                return default
+        return cast(T, dct)
 
 
 class RealtimeHandler(tornado.web.RequestHandler):
@@ -60,37 +81,32 @@ class RealtimeWebSocket(tornado.websocket.WebSocketHandler):
         m = Model.instance
         assert m
         md = m.get_all()
+        d = Data(md)
 
-        rx, tx = RealtimeWebSocket.safeget((None, None), md, 'net-wwan0', 'bytes')
-        if not (rx and tx):
-            rx = 0
-            tx = 0
-        delay_in_ms = RealtimeWebSocket.safeget(0, md, 'link', 'delay') * 1000.0
-        sq = RealtimeWebSocket.safeget((0), md, 'modem', 'signal-quality')
-        rat = RealtimeWebSocket.safeget('n/a', md, 'modem', 'access-tech')
-        rat2 = RealtimeWebSocket.safeget('n/a', md, 'modem', 'access-tech2')
-        if not rat and not rat2:
-            rat = 'n/a'
-        if rat2:
-            rat = f'{rat} {rat2}'
+        rx, tx = d.get((0, 0), 'net-wwan0', 'bytes')
+        rx = format_size(int(rx))
+        tx = format_size(int(tx))
+        delay_in_ms = d.get(0.0, 'link', 'delay') * 1000.0
+        sq = d.get(0, 'modem', 'signal-quality')
+        rat = d.get('n/a', 'modem', 'access-tech')
+        rat2 = d.get('n/a', 'modem', 'access-tech2')
+        rat = f'{rat} {rat2}'
         wwan0 = {
-            'rx': f'{int(rx):,}',
-            'tx': f'{int(tx):,}',
+            'rx': f'{rx}',
+            'tx': f'{tx}',
             'latency': str(delay_in_ms),
             'signal': str(sq),
-            # 'signal_ext': str(sq_ext),
             'rat': rat
         }
 
         default = {'fix': '-', 'lon': 0.0, 'lat': 0.0, 'speed': 0.0, 'pdop': 99.99}
-        pos = RealtimeWebSocket.safeget(default, md, 'gnss-pos')
+        pos = d.get(default, 'gnss-pos')
 
         # default_esf = {'esf-status': {'fusion': 'n/a', 'ins': 'n/a', 'imu': 'n/a', 'imu-align': 'n/a'}}
         # gnss_state = RealtimeWebSocket.safeget(default_esf, md, 'gnss-state')
         # esf_state = gnss_state['esf-status']
 
-        default = {'speed': 0.0, 'coolant-temp': 0.0}
-
+        # default = {'speed': 0.0, 'coolant-temp': 0.0}
         info = {
             'clients': len(RealtimeWebSocket.connections),
             'time': RealtimeWebSocket.counter,
@@ -101,13 +117,3 @@ class RealtimeWebSocket(tornado.websocket.WebSocketHandler):
         [client.write_message(info) for client in RealtimeWebSocket.connections]
 
         RealtimeWebSocket.counter += 1
-
-    @staticmethod
-    def safeget(default, dct, *keys):
-        for key in keys:
-            try:
-                dct = dct[key]
-            except KeyError as e:
-                logger.debug(f'cannot get {e}')
-                return default
-        return dct

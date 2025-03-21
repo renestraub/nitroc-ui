@@ -8,7 +8,7 @@ from typing import TypeVar, cast
 
 from ._version import __version__ as version
 from .data_model import Model
-from .tools import secs_to_hhmm
+from .tools import secs_to_hhmm, format_size, format_frequency
 
 logger = logging.getLogger('nitroc-ui')
 
@@ -47,6 +47,7 @@ def nice(items, data, linebreak=False):
             res += f' {unit}'
 
     return res
+
 
 
 T = TypeVar("T")
@@ -115,11 +116,13 @@ class MainHandler(tornado.web.RequestHandler):
             a, b, c = d.get((0, 0, 0), 'sys-misc', 'load')
             tes.append(TE('Load', f'{a}, {b}, {c}'))
 
-            core1 = d.get(0, 'sys-misc', 'cpu1_freq')
-            core2 = d.get(0, 'sys-misc', 'cpu2_freq')
-            core3 = d.get(0, 'sys-misc', 'cpu3_freq')
-            core4 = d.get(0, 'sys-misc', 'cpu4_freq')
-            tes.append(TE('CPU Frequency', f'{core1:.0f}, {core2:.0f}, {core3:.0f}, {core4:.0f} MHz'))
+            temp_str = ""
+            for i in range(1, 5):
+                freq = d.get(0, 'sys-misc', f'cpu{i}_freq')
+                freq = format_frequency(freq * 1_000)
+                temp_str += f'{freq}, ' 
+            temp_str = temp_str.rstrip(', ')
+            tes.append(TE('CPU Frequency', temp_str))
 
             tes.append(TH('Temperatures'))
 
@@ -136,18 +139,10 @@ class MainHandler(tornado.web.RequestHandler):
             tes.append(TE('PCB', temp_str))
 
             temp_str = ""
-            temp = d.get(0, 'sys-misc', 'temp_nmcf1')
-            if temp:
-                temp_str += f'1: {temp:.0f} °C, '
-            temp = d.get(0, 'sys-misc', 'temp_nmcf2')
-            if temp:
-                temp_str += f'2: {temp:.0f} °C, '
-            temp = d.get(0, 'sys-misc', 'temp_nmcf3')
-            if temp:
-                temp_str += f'3: {temp:.0f} °C, '
-            temp = d.get(0, 'sys-misc', 'temp_nmcf4')
-            if temp:
-                temp_str += f'4: {temp:.0f} °C'
+            for i in range(1, 5):
+                temp = d.get(0, 'sys-misc', f'temp_nmcf{i}')
+                if temp:
+                    temp_str += f'{i}: {temp:.0f} °C, '
             temp_str = temp_str.rstrip(', ')
             tes.append(TE('NMCF', temp_str))
 
@@ -238,18 +233,11 @@ class MainHandler(tornado.web.RequestHandler):
             tes.append(TE('PCB', temp_str))
 
             temp_str = ""
-            temp = d.get(0, 'sys-misc', 'pwr_nmcf1')
-            if temp:
-                temp_str += f'1: {temp:.1f} W, '
-            temp = d.get(0, 'sys-misc', 'pwr_nmcf2')
-            if temp:
-                temp_str += f'2: {temp:.1f} W, '
-            temp = d.get(0, 'sys-misc', 'pwr_nmcf3')
-            if temp:
-                temp_str += f'3: {temp:.1f} W, '
-            temp = d.get(0, 'sys-misc', 'pwr_nmcf4')
-            if temp:
-                temp_str += f'4: {temp:.1f} W'
+            for i in range(1, 5):
+                temp = d.get(0, 'sys-misc', f'pwr_nmcf{i}')
+                if temp:
+                    temp_str += f'{i}: {temp:.1f} W, '
+
             temp_str = temp_str.rstrip(', ')
             tes.append(TE('NMCF', temp_str))
 
@@ -263,15 +251,15 @@ class MainHandler(tornado.web.RequestHandler):
 
             rx, tx = d.get((None, None), 'net-wwan0', 'bytes')
             if rx and tx:
-                rx = int(rx) / 1000000
-                tx = int(tx) / 1000000
-                tes.append(TE('wwan0', f'Rx: {rx:.1f} MB, Tx: {tx:.1f} MB'))
+                rx = format_size(int(rx))
+                tx = format_size(int(tx))
+                tes.append(TE('wwan0', f'Rx: {rx}, Tx: {tx}'))
 
             rx, tx = d.get((None, None), 'net-wlan0', 'bytes')
             if rx and tx:
-                rx = int(rx) / 1000000
-                tx = int(tx) / 1000000
-                tes.append(TE('wlan0', f'Rx: {rx:.1f} MB, Tx: {tx:.1f} MB'))
+                rx = format_size(int(rx))
+                tx = format_size(int(tx))
+                tes.append(TE('wlan0', f'Rx: {rx}, Tx: {tx}'))
 
             # Modem Information
             mi = md['modem']

@@ -51,3 +51,35 @@ def is_valid_ipv4(address):
         return True  # It's a valid IPv4 address
     except ipaddress.AddressValueError:
         return False  # It's not a valid IPv4 address
+
+
+def format_size(bytes: int) -> str:
+    """
+    Convert a size in bytes to a human-readable string with GB, MB, KB, or Bytes.
+    
+    :param bytes: The size in bytes.
+    :return: A formatted string representing the size.
+    """
+    if bytes >= 1_000_000_000:
+        return f"{bytes / 1_000_000_000:.2f} GB"
+    elif bytes >= 1_000_000:
+        return f"{bytes / 1_000_000:.2f} MB"
+    elif bytes >= 1_000:
+        return f"{bytes / 1_000:.2f} KB"
+    else:
+        return f"{bytes} Bytes"
+
+
+def format_frequency(hz: int) -> str:
+    """
+    Convert a frequency in Hz to a human-readable string with GHz or MHz.
+    
+    :param hz: The frequency in Hz.
+    :return: A formatted string representing the frequency.
+    """
+    if hz >= 1_000_000_000:
+        return f"{hz / 1_000_000_000:.1f} GHz"
+    elif hz >= 1_000_000:
+        return f"{hz / 1_000_000:.0f} MHz"
+    else:
+        return f"{hz} Hz"
