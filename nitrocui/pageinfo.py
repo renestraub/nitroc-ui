@@ -55,6 +55,7 @@ class MainHandler(tornado.web.RequestHandler):
         logger.info('rendering page')
 
         try:
+            imei = None
             tes = list()
             data = dict()
 
@@ -64,7 +65,7 @@ class MainHandler(tornado.web.RequestHandler):
             md = m.get_all()
 
             cloud_log_state = md.get(False, 'cloud')
-            
+
             serial = md.get('N/A', 'sys-version', 'serial')
             ver_info = md.get(None, 'sys-version')
             text = nice([('sys', 'System', ''),
@@ -249,6 +250,11 @@ class MainHandler(tornado.web.RequestHandler):
                 model = mi.get('-', 'model')
                 tes.append(TE('Type', f'{vendor} {model}'))
 
+                imei = md.get('-', 'modem', 'imei')
+                tes.append(TE('IMEI', imei))
+                imei_info = {'imei': imei}
+                data.update(imei_info)
+
                 state = md.get('-', 'modem', 'state')
 
                 access_tech = mi.get('n/a', 'access-tech')
@@ -366,7 +372,8 @@ class MainHandler(tornado.web.RequestHandler):
                         message=message,
                         console=console,
                         version=version,
-                        cloud_log=cloud_log_state)
+                        cloud_log=cloud_log_state,
+                        imei=imei)
 
         except KeyError as e:
             logger.warning(f'lookup error {e}')
@@ -377,4 +384,5 @@ class MainHandler(tornado.web.RequestHandler):
                         data=None,
                         console=None,
                         version='n/a',
-                        cloud_log=False)
+                        cloud_log=False,
+                        imei=None)

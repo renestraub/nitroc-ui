@@ -23,14 +23,18 @@
                 <!-- <button class="button" onclick="window.location.href = '/gnss'">GNSS Status</button>
                 <button class="button" onclick="window.location.href = '/gnss_edit'">GNSS Config</button> -->
                 <p></p>
+                {% if imei %}
                 <button id="button_location" class="button button_green" type="button" onclick="do_location()">Enable Location</button>
+                {% end %}
                 <button id="button_find_cell" class="button button_green" type="button" onclick="do_cell_find()">Find Cell</button>
                 <p></p>
                 {% if not cloud_log %}
                 <button id="button_cloud" class="button button_orange" type="button" onclick="do_cloud(true)">Start Cloud Logging</button> {% else %}
                 <button id="button_cloud" class="button button_green" type="button" onclick="do_cloud(false)">Stop Cloud Logging</button> {% end %}
                 <p></p>
+                {% if imei %}
                 <button id="button_modem_reset" class="button button_orange" type="button" onclick="do_modem_reset()">Reset GSM Modem</button>
+                {% end %}
                 <!-- <button id="button_sleep" class="button button_orange" type="button" onclick="do_system_sleep()">Sleep</button> -->
                 <button id="button_reboot" class="button button_red" type="button" onclick="do_system_reboot()">Reboot</button>
                 <button id="button_powerdown" class="button button_red" type="button" onclick="do_system_powerdown()">Powerdown</button>
@@ -182,14 +186,24 @@
         }
 
         function do_location() {
-            operate("Enabling 3GPP location detection", "do_location");
+            {% if imei %}
+            query = `imei=${localStorage.imei}`;
+            uri = "do_location?" + encodeURI(query);
+
+            operate("Enabling 3GPP location detection", uri);
+            {% end %}
         }
 
         function do_modem_reset() {
+            {% if imei %}
             res = confirm("Do you really want to reset the GSM modem?");
             if (res) {
-                operate("Resetting modem", "do_modem_reset");
+                query = `imei=${localStorage.imei}`;
+                uri = "do_modem_reset?" + encodeURI(query);
+
+                operate("Resetting modem", uri);
             }
+            {% end %}
         }
 
         function do_system_sleep() {

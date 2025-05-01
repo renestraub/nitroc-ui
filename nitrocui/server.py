@@ -49,23 +49,31 @@ logger.info(f'running server from {module_path}')
 
 class LocationHandler(tornado.web.RequestHandler):
     def get(self):
-        m = MM.modem()
-        if m:
-            m.setup_location_query()
-            self.write('3GPP location query enabled')
+        imei = self.get_query_argument('imei')
+        if imei:
+            m = MM.modem(imei)
+            if m:
+                m.setup_location_query()
+                self.write('3GPP location query enabled')
+            else:
+                self.write('No modem found')
         else:
-            self.write('No modem found')
+            self.write('No IMEI specified')
 
 
 class ModemResetHandler(tornado.web.RequestHandler):
     def get(self):
-        logger.warning('resetting modem')
-        m = MM.modem()
-        if m:
-            m.reset()
-            self.write('Modem reset successfully')
+        imei = self.get_query_argument('imei')
+        if imei:
+            logger.warning(f'resetting modem with IMEI {imei}')
+            m = MM.modem(imei)
+            if m:
+                m.reset()
+                self.write('Modem reset successfully')
+            else:
+                self.write('No modem found')
         else:
-            self.write('No modem found')
+            self.write('No IMEI specified')
 
 
 class SystemSleepHandler(tornado.web.RequestHandler):
