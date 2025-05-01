@@ -97,6 +97,16 @@ class Model(object):
     # Singleton accessor
     instance = None
 
+    DEFAULTS = {
+        'WWAN': {
+            'IMEI': '.*',
+            'Interface': 'wwan0'
+        },
+        'WLAN': {
+            'Interface': 'wlan0'
+        }
+    }
+
     def __init__(self):
         super().__init__()
 
@@ -117,13 +127,16 @@ class Model(object):
         self.config = configparser.ConfigParser()
         try:
             self.config.read(CONF_FILE)
-            self.wwan_interface = self.config.get('WWAN', 'Interface')
-            self.wlan_interface = self.config.get('WLAN', 'Interface')
+            logger.info(f'successfully loaded config from {CONF_FILE}')
         except configparser.Error as e:
-            self.wwan_interface = 'wwan0'
-            self.wlan_interface = 'wlan0'
-            logger.warning(f'ERROR: Cannot get config from {CONF_FILE}')
+            # Fallback to defaults if the config file cannot be read
+            logger.warning(f'cannot get config from {CONF_FILE}, using defaults')
             logger.info(e)
+
+        # Explicitly check for IMEI in the WWAN section
+        self.wwan_imei = self.config.get('WWAN', 'IMEI', fallback=self.DEFAULTS['WWAN']['IMEI'])
+        self.wwan_interface = self.config.get('WWAN', 'Interface', fallback=self.DEFAULTS['WWAN']['Interface'])
+        self.wlan_interface = self.config.get('WLAN', 'Interface', fallback=self.DEFAULTS['WLAN']['Interface'])
 
     def setup(self):
         self.system_led.color(self.led_color)
@@ -351,7 +364,7 @@ class ModelWorker(threading.Thread):
 
     def _modem(self):
         info = dict()
-        m = MM.modem()
+        m = MM.modem(self.model.wwan_imei)
         if m:
             if not self.modem_setup_done:
                 self._modem_setup(m)
@@ -362,6 +375,7 @@ class ModelWorker(threading.Thread):
             info['vendor'] = m.vendor(m_info)
             info['model'] = m.model(m_info)
             info['revision'] = m.revision(m_info)
+            info['imei'] = m.imei(m_info)
 
             state = m.state(m_info)
             access_tech = m.access_tech(m_info)

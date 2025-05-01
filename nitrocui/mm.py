@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import re  # Import regular expression module
 
 logger = logging.getLogger('nitroc-ui')
 
@@ -8,8 +9,8 @@ MMCLI_BIN = '/usr/bin/mmcli'
 
 class MM():
     @staticmethod
-    def modem():
-        id = MM._id()
+    def modem(imei: str):
+        id = MM._id(imei)
         if id is not None:
             return Modem(id)    # else None
 
@@ -24,7 +25,7 @@ class MM():
             return None
 
     @staticmethod
-    def _id():
+    def _id(imei: str):
         mmr = MM.command([MMCLI_BIN, '-K', '-L'])
         # If successful, returns number of modems with each modems id.
         #   modem-list.length   : 1
@@ -33,9 +34,20 @@ class MM():
         # entry is present
         #   modem-list : 0
         if mmr:
-            num_modems = mmr.text('modem-list.length')
+            num_modems = mmr.dec('modem-list.length')
             if num_modems:
-                return mmr.id('modem-list.value[1]')
+                for i in range(1, num_modems + 1):
+                    modem_id = mmr.id(f'modem-list.value[{i}]')
+
+                    # Create temporary modem object with <modem_id>
+                    modem = Modem(modem_id)
+                    modem_info = modem.get_info()
+
+                    # Compare IMEI with regular expression <imei>
+                    modem_imei = modem.imei(modem_info)
+                    if modem_imei and re.fullmatch(imei, modem_imei):
+                        # If match, return modem_id
+                        return modem_id
             else:
                 logger.info('no modem(s) found')
                 return None
@@ -155,6 +167,9 @@ class Modem():
     def revision(self, mmr):
         return mmr.text('modem.generic.revision')
 
+    def imei(self, mmr):
+        return mmr.text('modem.3gpp.imei')
+
     def state(self, mmr):
         return mmr.text('modem.generic.state')
 
@@ -231,10 +246,11 @@ class Modem():
     def location(self):
         res = dict()
         mmr = self._info('--location-get')
-        res['mcc'] = mmr.dec('modem.location.3gpp.mcc')
-        res['mnc'] = mmr.dec('modem.location.3gpp.mnc')
-        res['lac'] = mmr.hex('modem.location.3gpp.tac')
-        res['cid'] = mmr.hex('modem.location.3gpp.cid')
+        if mmr is not None:
+            res['mcc'] = mmr.dec('modem.location.3gpp.mcc')
+            res['mnc'] = mmr.dec('modem.location.3gpp.mnc')
+            res['lac'] = mmr.hex('modem.location.3gpp.tac')
+            res['cid'] = mmr.hex('modem.location.3gpp.cid')
         return res
 
     def bearer(self, mmr):
