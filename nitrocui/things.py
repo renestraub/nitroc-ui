@@ -491,6 +491,16 @@ class ThingsDataCollector(threading.Thread):
                 sq = info['signal-quality']
                 telemetry['siqnal-qlt'] = sq
 
+            if (sq5g := info.get('signal-5g')) is not None:
+                telemetry['siq-5g-rsrp'] = sq5g['rsrp']
+                telemetry['siq-5g-rsrq'] = sq5g['rsrq']
+                telemetry['siq-5g-snr'] = sq5g['snr']
+
+            if (sqlte := info.get('signal-lte')) is not None:
+                telemetry['siq-lte-rsrp'] = sqlte['rsrp']
+                telemetry['siq-lte-rsrq'] = sqlte['rsrq']
+                telemetry['siq-lte-snr'] = sqlte['snr']
+
             if 'bearer-id' in info:
                 id = info['bearer-id']
                 telemetry['bearer-id'] = id
@@ -498,12 +508,14 @@ class ThingsDataCollector(threading.Thread):
                     uptime = info['bearer-uptime']
                     telemetry['bearer-uptime'] = uptime
 
-        if (info := md.get('net-wwan0')) is not None:
+        if 'net-wwan0' in md:
+            info = md['net-wwan0']
             (rx, tx) = info['bytes']
             telemetry['wwan0-rx'] = f'{rx}'
             telemetry['wwan0-tx'] = f'{tx}'
 
-        if (info := md.get('net-wlan0')) is not None:
+        if 'net-wlan0' in md:
+            info = md['net-wlan0']
             (rx, tx) = info['bytes']
             telemetry['wlan0-rx'] = f'{rx}'
             telemetry['wlan0-tx'] = f'{tx}'
@@ -513,7 +525,8 @@ class ThingsDataCollector(threading.Thread):
 
     def _traffic(self, md):
         telemetry = dict()
-        if (info := md.get('traffic-wwan0')) is not None:
+        if 'traffic-wwan0' in md:
+            info = md['traffic-wwan0']
             telemetry['wwan0-rx-day'] = f'{info["day_rx"]}'
             telemetry['wwan0-tx-day'] = f'{info["day_tx"]}'
             telemetry['wwan0-rx-month'] = f'{info["month_rx"]}'
@@ -523,7 +536,8 @@ class ThingsDataCollector(threading.Thread):
             self._data_queue.add(telemetry)
 
     def _gnss(self, md, force):
-        if (pos := md.get('gnss-pos')) is not None:
+        if 'gnss-pos' in md:
+            pos = md['gnss-pos']
             if 'lon' in pos and 'lat' in pos:
                 lon_rad = math.radians(pos['lon'])
                 lat_rad = math.radians(pos['lat'])
