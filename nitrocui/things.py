@@ -21,7 +21,6 @@ from io import BytesIO
 
 import pycurl
 
-from .tools import is_valid_ipv4
 from .transmit_queue import TransmitQueue
 from ._version import __version__ as ui_version
 
@@ -266,9 +265,6 @@ class Things(threading.Thread):
         body_as_json_bytes = body_as_json_string.encode()
         body_as_file_object = BytesIO(body_as_json_bytes)
 
-        # print(body_as_json_bytes)
-        # res = True
-
         # prepare and send. See also: pycurl.READFUNCTION to pass function instead
         c.setopt(pycurl.READDATA, body_as_file_object)
         c.setopt(pycurl.POSTFIELDSIZE, len(body_as_json_string))
@@ -453,8 +449,6 @@ class ThingsDataCollector(threading.Thread):
             telemetry['temp-ic-cp0'] = info['temp_cp0']
             telemetry['temp-ic-cp2'] = info['temp_cp2']
 
-            # print(info['pwr_mb'])
-            # print(info['pwr_eth'])
             if info['pwr_mb']:
                 telemetry['pwr-mb'] = info['pwr_mb']
             if info['pwr_eth']:
@@ -462,21 +456,13 @@ class ThingsDataCollector(threading.Thread):
 
             # Report 0.0 W power for empty slots, so that Thingsboard can accumulate powers in graph
             # Reasoning: Stacking doesn't work if values are missing
-            # print(info['pwr_nmcf1'])
-            # print(info['pwr_nmcf2'])
-            # print(info['pwr_nmcf3'])
-            # print(info['pwr_nmcf4'])
-            for i in range(1, 4+1):
-                if info[f'pwr_nmcf{i}']:
-                    telemetry[f'pwr-nmcf{i}'] = info[f'pwr_nmcf{i}']
-                else:
-                    telemetry[f'pwr-nmcf{i}'] = 0
+            for i in range(1, 5):
+                telemetry[f'pwr-nmcf{i}'] = info.get(f'pwr_nmcf{i}', 0)
 
         if 'link' in md:
             info = md['link']
-            if 'delay' in info:
-                delay_in_ms = info['delay'] * 1000.0
-                telemetry['wwan-delay'] = f'{delay_in_ms:.0f}'
+            if (delay := info.get('delay')) is not None:
+                telemetry['wwan-delay'] = f'{delay * 1000.0:.0f}'
 
         if 'modem' in md:
             info = md['modem']
@@ -501,10 +487,6 @@ class ThingsDataCollector(threading.Thread):
                 sq = info['signal-quality']
                 telemetry['siqnal-qlt'] = sq
 
-            # if 'signal-quality2' in info:
-            #     sq = info['signal-quality2']
-            #     telemetry['signal-qlt-ext'] = sq
-
             if 'bearer-id' in info:
                 id = info['bearer-id']
                 telemetry['bearer-id'] = id
@@ -512,14 +494,12 @@ class ThingsDataCollector(threading.Thread):
                     uptime = info['bearer-uptime']
                     telemetry['bearer-uptime'] = uptime
 
-        if 'net-wwan0' in md:
-            info = md['net-wwan0']
+        if (info := md.get('net-wwan0')) is not None:
             (rx, tx) = info['bytes']
             telemetry['wwan0-rx'] = f'{rx}'
             telemetry['wwan0-tx'] = f'{tx}'
 
-        if 'net-wlan0' in md:
-            info = md['net-wlan0']
+        if (info := md.get('net-wlan0')) is not None:
             (rx, tx) = info['bytes']
             telemetry['wlan0-rx'] = f'{rx}'
             telemetry['wlan0-tx'] = f'{tx}'
@@ -529,8 +509,7 @@ class ThingsDataCollector(threading.Thread):
 
     def _traffic(self, md):
         telemetry = dict()
-        if 'traffic-wwan0' in md:
-            info = md['traffic-wwan0']
+        if (info := md.get('traffic-wwan0')) is not None:
             telemetry['wwan0-rx-day'] = f'{info["day_rx"]}'
             telemetry['wwan0-tx-day'] = f'{info["day_tx"]}'
             telemetry['wwan0-rx-month'] = f'{info["month_rx"]}'
@@ -540,8 +519,7 @@ class ThingsDataCollector(threading.Thread):
             self._data_queue.add(telemetry)
 
     def _gnss(self, md, force):
-        if 'gnss-pos' in md:
-            pos = md['gnss-pos']
+        if (pos := md.get('gnss-pos')) is not None:
             if 'lon' in pos and 'lat' in pos:
                 lon_rad = math.radians(pos['lon'])
                 lat_rad = math.radians(pos['lat'])
