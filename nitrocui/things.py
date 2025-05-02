@@ -461,7 +461,10 @@ class ThingsDataCollector(threading.Thread):
             # Report 0.0 W power for empty slots, so that Thingsboard can accumulate powers in graph
             # Reasoning: Stacking doesn't work if values are missing
             for i in range(1, 5):
-                telemetry[f'pwr-nmcf{i}'] = info.get(f'pwr_nmcf{i}', 0)
+                if info[f'pwr_nmcf{i}']:
+                    telemetry[f'pwr-nmcf{i}'] = info[f'pwr_nmcf{i}']
+                else:
+                    telemetry[f'pwr-nmcf{i}'] = 0
 
         if 'link' in md:
             info = md['link']
