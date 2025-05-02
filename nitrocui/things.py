@@ -402,6 +402,10 @@ class ThingsDataCollector(threading.Thread):
             if 'revision' in info:
                 attrs['wwan-version'] = info['revision']
 
+            if 'imei' in info:
+                imei = info['imei']
+                attrs['wwan-imei'] = imei
+
             if 'sim-id' in info:
                 imsi = info['sim-imsi']
                 attrs['sim-imsi'] = imsi
