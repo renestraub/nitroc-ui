@@ -213,18 +213,39 @@ class Modem():
 
     def signal_5g(self, mmr):
         res = dict()
-        res['rsrp'] = mmr.number('modem.signal.5g.rsrp')
-        res['rsrq'] = mmr.number('modem.signal.5g.rsrq')
+        rsrp = mmr.number('modem.signal.5g.rsrp')
+        if Modem.is_valid_signal(rsrp):
+            res['rsrp'] = rsrp
+        else:
+            res['rsrp'] = -120  # Fallback value for rsrp
+
+        rsrq = mmr.number('modem.signal.5g.rsrq')
+        if Modem.is_valid_rsrq(rsrq):
+            res['rsrq'] = rsrq
+        else:
+            res['rsrq'] = -20  # Fallback value for rsrq
+
         snr = mmr.number('modem.signal.5g.snr')
-        if snr:
+        if Modem.is_valid_snr(snr):
             res['snr'] = snr
+        else:
+            res['snr'] = 0  # Fallback value for snr
 
         return res
 
     def signal_lte(self, mmr):
         res = dict()
-        res['rsrp'] = mmr.number('modem.signal.lte.rsrp')
-        res['rsrq'] = mmr.number('modem.signal.lte.rsrq')
+        rsrp = mmr.number('modem.signal.lte.rsrp')
+        if Modem.is_valid_signal(rsrp):
+            res['rsrp'] = rsrp
+        else:
+            res['rsrp'] = -120  # Fallback value for rsrp
+
+        rsrq = mmr.number('modem.signal.lte.rsrq')
+        if Modem.is_valid_rsrq(rsrq):
+            res['rsrq'] = rsrq
+        else:
+            res['rsrq'] = -20  # Fallback value for rsrq
 
         # Some modems also report rssi and s/n, add if present
         rssi = mmr.number('modem.signal.lte.rssi')
@@ -232,8 +253,10 @@ class Modem():
             res['rssi'] = rssi
 
         snr = mmr.number('modem.signal.lte.snr')
-        if snr:
+        if Modem.is_valid_snr(snr):
             res['snr'] = snr
+        else:
+            res['snr'] = 0  # Fallback value for snr
 
         return res
 
@@ -269,6 +292,21 @@ class Modem():
             cmd.append(extra)
 
         return MM.command(cmd)
+
+    @staticmethod
+    def is_valid_signal(value, min_value=-160, max_value=-40):
+        """Check if the signal value is within the valid range."""
+        return value is not None and min_value <= value <= max_value
+
+    @staticmethod
+    def is_valid_rsrq(value, min_value=-40, max_value=0):
+        """Check if the RSRQ value is within the valid range."""
+        return value is not None and min_value <= value <= max_value
+
+    @staticmethod
+    def is_valid_snr(value, min_value=-20, max_value=40):
+        """Check if the SNR value is within the valid range."""
+        return value is not None and min_value <= value <= max_value
 
 
 class Bearer():
