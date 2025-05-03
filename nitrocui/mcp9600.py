@@ -60,21 +60,31 @@ class MCP9600:
     def version(self):
         """ MCP9600 chip version """
         data = self.__getreg8(_REGISTER_VERSION)
-        return data[0]
+        if data is not None:
+            return data[0]
+        else:
+            return 0
 
     def ambient_temperature(self):
         """ Cold junction/ambient/room temperature in Celsius """
         data = self.__getreg16(_REGISTER_COLD_JUNCTION)
-        return self.temp_c(data)
+        if data is not None:
+            return self.temp_c(data)
+        else:
+            return 0
 
     def temperature(self):
         """ Hot junction temperature in Celsius """
         data = self.__getreg16(_REGISTER_HOT_JUNCTION)
-        return self.temp_c(data)
+        if data is not None:
+            return self.temp_c(data)
+        else:
+            return 0
 
     def temp_c(self, byteData):
         # data = 16 bit signed, 2's complement
         # byte 0 = MSB, byte 1 = LSB
+        assert len(byteData) == 2
         temp = struct.unpack('>h', byteData)[0]
         return temp / 16.0
 

@@ -42,7 +42,10 @@ class OBD2():
             logger.warning(f'Cannot bind to interface {self.interface}')
 
     def cleanup(self):
-        self.sock.close()
+        if self.sock is not None:
+            self.sock.close()
+            self.sock = None
+        # TODO: disable_interface?
         self._enable_interface()
 
     def speed(self):
@@ -61,6 +64,9 @@ class OBD2():
                 return pid
 
     def _request(self, pid):
+        assert self.sock is not None
+        assert pid is not None
+
         payload = bytearray()
         payload.append(2)   # bytes to follow
         payload.append(self.service_current_data)   # service
@@ -79,6 +85,8 @@ class OBD2():
             return None
 
     def _wait_for_response(self, pid):
+        assert self.sock is not None
+
         to = Timeout(RX_TIMEOUT)
         while not to.has_elapsed():
             try:
@@ -100,6 +108,8 @@ class OBD2():
                 # TODO: Capture OSError here as well?
 
     def _flush_rx_queue(self):
+        assert self.sock is not None
+
         self.sock.settimeout(0.000001)  # 1 us, must not be 0.0
         while True:
             try:
@@ -137,7 +147,10 @@ class OBD2():
 
     @staticmethod
     def _exec_script(command):
+        # TODO: subprocess.run?
         with Popen(command, stdout=PIPE, stderr=PIPE) as pipe:
+            assert pipe is not None and pipe.stdout is not None and pipe.stderr is not None
+
             stdout = pipe.stdout.read().decode().strip()
             logger.debug(
                 'calling "{}" results in "{}" on stdout'.format(command, stdout)

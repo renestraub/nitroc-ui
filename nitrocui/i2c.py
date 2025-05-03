@@ -4,7 +4,7 @@ This module provides a class for I2C communication. It uses the /dev/i2c-n devic
 import os
 import fcntl
 
-I2C_SLAVE = 0x0703
+IOCTL_I2C_SLAVE_ADDR = 0x0703
 
 class I2C:
     """
@@ -24,24 +24,29 @@ class I2C:
         """
         Close the I2C device
         """
-        os.close(self.fd)
+        if self.fd is not None:
+            os.close(self.fd)
+            self.fd = None
 
     def set_addr(self, addr):
         """
-        Set the address of the device
+        Set the address of the device to target
         """
-        fcntl.ioctl(self.fd, I2C_SLAVE, addr)
+        assert self.fd is not None, 'I2C device not opened'
+        fcntl.ioctl(self.fd, IOCTL_I2C_SLAVE_ADDR, addr)
 
     def write(self, data):
         """
         Write data over i2c
         """
+        assert self.fd is not None, 'I2C device not opened'
         os.write(self.fd, bytes(data))
 
     def read(self, length):
         """
         Read data over i2c
         """
+        assert self.fd is not None, 'I2C device not opened'
         return os.read(self.fd, length)
 
     def read_reg8(self, reg, length):

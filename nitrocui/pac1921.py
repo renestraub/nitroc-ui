@@ -38,13 +38,13 @@ class PAC1921():
 
         self.last_cfg = ''
 
-    def id(self) -> None:
-        prod_id = self.__getreg8(0xFD)
-        print(f'product id  : 0x{prod_id:02X}')
-        manu_id = self.__getreg8(0xFE)
-        print(f'mfct id     : 0x{manu_id:02X}')
-        revision = self.__getreg8(0xFF)
-        print(f'revision    : 0x{revision:02X}')
+    # def id(self) -> None:
+    #     prod_id = self.__getreg8(0xFD)
+    #     print(f'product id  : 0x{prod_id:02X}')
+    #     manu_id = self.__getreg8(0xFE)
+    #     print(f'mfct id     : 0x{manu_id:02X}')
+    #     revision = self.__getreg8(0xFF)
+    #     print(f'revision    : 0x{revision:02X}')
 
     def start(self) -> None:
         # Set chip in read state to change configuration
@@ -57,13 +57,13 @@ class PAC1921():
         # Integration
         self.__setreg8(0x01, self.integ_cfg_val)
 
-    def config(self) -> None:
-        gain = self.__getreg8(0x00)
-        print(f'gain        : 0x{gain:02X}')
-        integration = self.__getreg8(0x01)
-        print(f'integration : 0x{integration:02X}')
-        ctrl = self.__getreg8(0x02)
-        print(f'ctrl        : 0x{ctrl:02X}')
+    # def config(self) -> None:
+    #     gain = self.__getreg8(0x00)
+    #     print(f'gain        : 0x{gain:02X}')
+    #     integration = self.__getreg8(0x01)
+    #     print(f'integration : 0x{integration:02X}')
+    #     ctrl = self.__getreg8(0x02)
+    #     print(f'ctrl        : 0x{ctrl:02X}')
 
     def voltage(self) -> float:
         # control byte -> select data type Vbus
@@ -124,11 +124,6 @@ class PAC1921():
         self.last_cfg = 'power'
 
         return vsense
-
-    def __getreg8(self, reg: int) -> int:
-        self.i2c.set_addr(self.addr)
-        data = self.i2c.read_reg8(reg, 1)
-        return data[0]
 
     def __getreg16(self, reg: int) -> int:
         self.i2c.set_addr(self.addr)
