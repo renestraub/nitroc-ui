@@ -23,9 +23,6 @@
                 <!-- <button class="button" onclick="window.location.href = '/gnss'">GNSS Status</button>
                 <button class="button" onclick="window.location.href = '/gnss_edit'">GNSS Config</button> -->
                 <p></p>
-                {% if imei %}
-                <button id="button_location" class="button button_green" type="button" onclick="do_location()">Enable Location</button>
-                {% end %}
                 <button id="button_find_cell" class="button button_green" type="button" onclick="do_cell_find()">Find Cell</button>
                 <p></p>
                 {% if not cloud_log %}
@@ -185,15 +182,6 @@
             }
         }
 
-        function do_location() {
-            {% if imei %}
-            query = `imei=${localStorage.imei}`;
-            uri = "do_location?" + encodeURI(query);
-
-            operate("Enabling 3GPP location detection", uri);
-            {% end %}
-        }
-
         function do_modem_reset() {
             {% if imei %}
             res = confirm("Do you really want to reset the GSM modem?");
@@ -240,8 +228,9 @@
             mcc = localStorage.mcc;
             mnc = localStorage.mnc;
             lac = localStorage.lac;
+            tac = localStorage.tac;
             cid = localStorage.cid;
-            query = `mcc=${mcc}&mnc=${mnc}&lac=${lac}&cid=${cid}`;
+            query = `mcc=${mcc}&mnc=${mnc}&lac=${lac}&tac=${tac}&cid=${cid}`;
             uri = "/do_cell_locate?" + encodeURI(query);
             xhttp.open("GET", uri, true);
             xhttp.send();

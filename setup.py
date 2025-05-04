@@ -26,7 +26,8 @@ setuptools.setup(
         'tornado',
         'requests',
         'ping3',
-        'pycurl'
+        'pycurl',
+        'dbus-python'
     ],
     include_package_data=True,  # Use MANIFEST.in to add *.html, *.css files
     entry_points={

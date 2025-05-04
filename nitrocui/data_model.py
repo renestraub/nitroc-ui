@@ -27,7 +27,7 @@ from .sysinfo_sensors import SysInfoSensors
 from .sysinfo_power import SysInfoPower
 from .crosec_sensors import CrosEcSensors
 from .vnstat import VnStat
-from .tools import nmcli_network_check
+from .tools import dbus_network_check
 
 
 CONF_FILE = '/etc/nitrocui.conf'
@@ -64,12 +64,10 @@ class ModelData():
             logger.debug(f'cannot get {e}')
             return default
 
-    # TODO: get_setion() method?
-
     def exists(self, *keys) -> bool:
         """
         Check if a nested key path exists in the dictionary.
-        
+
         :param keys: The sequence of keys to check.
         :return: True if the path exists, otherwise False.
         """
@@ -82,7 +80,7 @@ class ModelData():
     def _navigate_dict(self, *keys) -> dict:
         """
         Navigate through a nested dictionary using keys.
-        
+
         :param dct: The dictionary to navigate.
         :param keys: The sequence of keys to access the nested value.
         :return: The final value if all keys exist, else raises KeyError.
@@ -342,7 +340,7 @@ class ModelWorker(threading.Thread):
         si = self.si
 
         info_net = dict()
-        conn_state = nmcli_network_check()
+        conn_state = dbus_network_check()
         info_net['inet-conn'] = conn_state
         self.model.publish('network', info_net)
 
@@ -357,7 +355,6 @@ class ModelWorker(threading.Thread):
     def _modem_setup(self, m):
         logger.info("enabling signal query")
         if m:
-            m.setup_signal_query()
             self.modem_setup_done = True
         else:
             logger.info("modem not yet ready")
@@ -370,16 +367,15 @@ class ModelWorker(threading.Thread):
                 self._modem_setup(m)
 
             info['modem-id'] = str(m.id)
-            m_info = m.get_info()
 
-            info['vendor'] = m.vendor(m_info)
-            info['model'] = m.model(m_info)
-            info['revision'] = m.revision(m_info)
-            info['imei'] = m.imei(m_info)
+            info['vendor'] = m.vendor()
+            info['model'] = m.model()
+            info['revision'] = m.revision()
+            info['imei'] = m.imei()
 
-            state = m.state(m_info)
-            access_tech = m.access_tech(m_info)
-            access_tech2 = m.access_tech2(m_info)
+            state = m.state()
+            access_tech = m.access_tech()
+            access_tech2 = m.access_tech2()
 
             info['state'] = state
             info['access-tech'] = access_tech
@@ -387,60 +383,42 @@ class ModelWorker(threading.Thread):
                 info['access-tech2'] = access_tech2
 
             loc_info = m.location()
-            if loc_info['mcc']:
+            if loc_info is not None and loc_info['mcc']:
                 info['location'] = loc_info
 
-            sq = m.signal_quality(m_info)
+            sq = m.signal_quality()
             info['signal-quality'] = sq
-
-            # Get access tech from signal quality command as regular RAT
-            # information from ModemManager is not reliable
-            sig_info = m.signal_get()
-
-            # sig_rat = m.access_tech(sig_info)
-            # sig_rat2 = m.access_tech2(sig_info)
-            # print(sig_rat, sig_rat2)
 
             # FN990 reports LTE and 5G as 2nd technology
             if access_tech == '5gnr' or access_tech2 == '5gnr':
-                sig = m.signal_5g(sig_info)
+                sig = m.signal_5g()
                 info['signal-5g'] = sig
 
             if access_tech == 'lte':
-                sig = m.signal_lte(sig_info)
+                sig = m.signal_lte()
                 info['signal-lte'] = sig
 
-                # Seldomly the signal fields are not defined, handle gracefully
-                # if sig['rsrq'] and sig['rsrp']:
-                #     # Compute an alternate signal quality indicator to ModemManager
-                #     lte_q = SignalQuality_LTE(sig['rsrq'], sig['rsrp'])
-                #     qual = lte_q.quality() * 100.0
-                #     info['signal-quality2'] = round(qual)
-
             if access_tech == 'umts':
-                sig = m.signal_umts(sig_info)
+                sig = m.signal_umts()
                 info['signal-umts'] = sig
 
-            b = m.bearer(m_info)
+            b = m.bearer()
             if b:
-                b_info = b.get_info()
-
                 info['bearer-id'] = str(b.id)
-                ut = b.uptime(b_info)
+                ut = b.uptime()
                 if ut:
                     info['bearer-uptime'] = ut
-                ip = b.ip(b_info)
+                ip = b.ip()
                 if ip:
                     info['bearer-ip'] = ip
 
-            s = m.sim(m_info)
+            s = m.sim()
             if s:
                 info['sim-id'] = str(s.id)
 
-                s_info = s.get_info()
-                imsi = s.imsi(s_info)
+                imsi = s.imsi()
                 info['sim-imsi'] = imsi
-                iccid = s.iccid(s_info)
+                iccid = s.iccid()
                 info['sim-iccid'] = iccid
         else:
             self.modem_setup_done = False

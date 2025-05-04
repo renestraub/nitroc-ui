@@ -47,20 +47,6 @@ module_path = os.path.dirname(path)
 logger.info(f'running server from {module_path}')
 
 
-class LocationHandler(tornado.web.RequestHandler):
-    def get(self):
-        imei = self.get_query_argument('imei')
-        if imei:
-            m = MM.modem(imei)
-            if m:
-                m.setup_location_query()
-                self.write('3GPP location query enabled')
-            else:
-                self.write('No modem found')
-        else:
-            self.write('No IMEI specified')
-
-
 class ModemResetHandler(tornado.web.RequestHandler):
     def get(self):
         imei = self.get_query_argument('imei')
@@ -113,34 +99,65 @@ class GsmCellLocateHandler(tornado.web.RequestHandler):
         mcc = self.get_query_argument('mcc', '0')
         mnc = self.get_query_argument('mnc', '0')
         lac = self.get_query_argument('lac', '0')
+        tac = self.get_query_argument('tac', '0')
         cid = self.get_query_argument('cid', '0')
 
-        logger.debug(f'cellinfo: mcc {mcc}, mnc {mnc}, lac {lac}, cid {cid}')
+        logger.info(f'cellinfo: mcc {mcc}, mnc {mnc}, lac {lac}, tac {tac}, cid {cid}')
 
-        # https://opencellid.org/ajax/searchCell.php?mcc=228&mnc=1&lac=3434&cell_id=17538051
+        # try to find cell location with opencellid
+        # request form = https://opencellid.org/ajax/searchCell.php?mcc=228&mnc=1&lac=3434&cell_id=17538051
+
+        # opencellid API expects LAC, for 4G/LTE this is the TAC
+        if lac == '0':
+            lac = tac
         args = {'mcc': mcc, 'mnc': mnc, 'lac': lac, 'cell_id': cid}
         r = requests.get("https://opencellid.org/ajax/searchCell.php", params=args)
-        if r.text != "false":
-            d = json.loads(r.text)
+
+        # Blindly try to convert to JSON, check for errors later
+        d = json.loads(r.text)
+        if isinstance(d, dict) and "lon" in d and "lat" in d:
             lon = d["lon"]
             lat = d["lat"]
+            logger.info(f'cell location: {lon}/{lat}')
 
-            result = f'Cell Location: {d["lon"]}/{d["lat"]}'
+            result = f'Cell Location: {lon}/{lat}'
 
             # try to determine location for lon/lat with OSM reverse search
-            args = {'lon': lon, 'lat': lat, 'format': 'json'}
-            r = requests.get("https://nominatim.openstreetmap.org/reverse",
-                             params=args)
-            d = json.loads(r.text)
-            if 'display_name' in d:
-                location = d['display_name']
+            """
+            GET /reverse.php?lat=47.321486&lon=7.964929&zoom=18&format=jsonv2 HTTP/2
+            User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:137.0) Gecko/20100101 Firefox/137.0
+            Cookie: _osm_totp_token=790611
+            """
 
-                result += '</br>'
-                result += f'{location}'
+            # URL for reverse geocoding
+            url = "https://nominatim.openstreetmap.org/reverse.php"
+            # Query parameters
+            params = {
+                "lat": lat,
+                "lon": lon,
+                "zoom": 16,
+                "format": "jsonv2"
+            }
+            # Headers (to avoid being blocked)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:137.0) Gecko/20100101 Firefox/137.0"
+            }
+
+            response = requests.get(url, params=params, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                if "display_name" in data:
+                    location_name = data["display_name"]
+                    logger.info(f"location name: {location_name}")
+                    result += '</br>'
+                    result += f'{location_name}'
+                else:
+                    logger.info("Location name not found in the response.")
+            else:
+                logger.info(f"Failed to fetch location. HTTP Status Code: {response.status_code}")
 
             result += '</br>'
             result += f'<a target="_blank" href="http://www.openstreetmap.org/?mlat={lat}&mlon={lon}&zoom=16">Link To OpenStreetMap</a>'
-
         else:
             result = 'Cell not found in opencellid database'
 
@@ -226,7 +243,6 @@ def run_server(port=80):
         (r"/traffic", TrafficHandler),
         (r'/traffic/img/(?P<filename>.+\.png)?', TrafficImageHandler),
 
-        (r"/do_location", LocationHandler),
         (r"/do_cell_locate", GsmCellLocateHandler),
         (r"/do_cloud", CloudHandler),
         (r"/do_gnss_save", GnssSaveHandler),

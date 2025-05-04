@@ -264,11 +264,12 @@ class MainHandler(tornado.web.RequestHandler):
                     tes.append(TE('State', f'{state}, {access_tech}'))
 
                 if mi.exists('location'):
-                    default = {'mcc': '-', 'mnc': '-', 'lac': '-', 'cid': '-'}
+                    default = {'mcc': '-', 'mnc': '-', 'lac': '-', 'tac': '-', 'cid': '-'}
                     loc_info = mi.get(default, 'location')
                     text = nice([('mcc', 'MCC', ''),
                                 ('mnc', 'MNC', ''),
                                 ('lac', 'LAC', ''),
+                                ('tac', 'TAC', ''),
                                 ('cid', 'CID', '')],
                                 loc_info)
                     tes.append(TE('Cell', text))

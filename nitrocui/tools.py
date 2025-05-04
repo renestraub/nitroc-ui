@@ -1,8 +1,9 @@
+import dbus
 import ipaddress
-import subprocess
 
-
-NMCLI_BIN = '/usr/bin/nmcli'
+# apt install cmake
+# apt install libdbus-1-dev
+# pip install dbus-python --break-system-packages
 
 
 def secs_to_hhmm(secs):
@@ -12,23 +13,43 @@ def secs_to_hhmm(secs):
     return h, m
 
 
-def nmcli_network_check():
+def dbus_network_check():
     """
-    Check level of internet access
+    Check the level of internet access using D-Bus and NetworkManager.
 
-    returns:
+    Returns:
     full: You have internet access.
     limited: You have a network connection but no full internet access.
     portal: The connection is behind a captive portal (e.g., hotel WiFi login page).
     none: No network connectivity.
-    unknown: The status is not known.    
+    unknown: The status is not known.
     """
-    cp = subprocess.run([NMCLI_BIN, 'networking', 'connectivity', 'check'], stdout=subprocess.PIPE)
-    if cp.returncode == 0:
-        res = cp.stdout.decode().strip()
-        return res
-    else:
-        return 'unknown'
+    try:
+        # Connect to the system bus
+        bus = dbus.SystemBus()
+
+        # Get the NetworkManager object
+        network_manager = bus.get_object("org.freedesktop.NetworkManager", "/org/freedesktop/NetworkManager")
+
+        # Call the CheckConnectivity method
+        connectivity = network_manager.Get(
+            "org.freedesktop.NetworkManager",
+            "Connectivity",
+            dbus_interface="org.freedesktop.DBus.Properties"
+        )
+
+        # Map the connectivity result to human-readable strings
+        connectivity_map = {
+            4: "full",      # Full internet access
+            3: "limited",   # Limited internet access
+            2: "portal",    # Captive portal
+            1: "none",      # No connectivity
+            0: "unknown"    # Unknown status
+        }
+
+        return connectivity_map.get(connectivity, "unknown") if isinstance(connectivity, int) else "unknown"
+    except dbus.DBusException as e:
+        return "unknown"
 
 
 def is_valid_ipv4(address):
