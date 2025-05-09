@@ -27,7 +27,7 @@ from .sysinfo_sensors import SysInfoSensors
 from .sysinfo_power import SysInfoPower
 from .crosec_sensors import CrosEcSensors
 from .vnstat import VnStat
-from .tools import dbus_network_check
+from .network_utils import network_check
 
 
 CONF_FILE = '/etc/nitrocui.conf'
@@ -340,7 +340,7 @@ class ModelWorker(threading.Thread):
         si = self.si
 
         info_net = dict()
-        conn_state = dbus_network_check()
+        conn_state = network_check()
         info_net['inet-conn'] = conn_state
         self.model.publish('network', info_net)
 
