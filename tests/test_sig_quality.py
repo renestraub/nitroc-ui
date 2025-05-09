@@ -1,73 +1,68 @@
 import math
+from nitrocui.cellular_signal_quality import CellularSignalQuality
 
-from nitrocui.sig_quality import SignalQuality_LTE
+
+class TestLimits:
+    def test_limit_signal(self):
+        # Test values within the range
+        assert CellularSignalQuality.limit_signal(-120) == -120
+        assert CellularSignalQuality.limit_signal(-100) == -100
+        assert CellularSignalQuality.limit_signal(-80) == -80
+
+        # Test values outside the range
+        assert CellularSignalQuality.limit_signal(-130) == -120  # Clamped to lower bound
+        assert CellularSignalQuality.limit_signal(-70) == -80    # Clamped to upper bound
+
+    def test_limit_rsrq(self):
+        # Test values within the range
+        assert CellularSignalQuality.limit_rsrq(-30) == -30
+        assert CellularSignalQuality.limit_rsrq(-15) == -15
+        assert CellularSignalQuality.limit_rsrq(0) == 0
+
+        # Test values outside the range
+        assert CellularSignalQuality.limit_rsrq(-35) == -30  # Clamped to lower bound
+        assert CellularSignalQuality.limit_rsrq(5) == 0      # Clamped to upper bound
+
+    def test_limit_snr(self):
+        # Test values within the range
+        assert CellularSignalQuality.limit_snr(-10) == -10
+        assert CellularSignalQuality.limit_snr(0) == 0
+        assert CellularSignalQuality.limit_snr(30) == 30
+
+        # Test values outside the range
+        assert CellularSignalQuality.limit_snr(-15) == -10  # Clamped to lower bound
+        assert CellularSignalQuality.limit_snr(40) == 30    # Clamped to upper bound
 
 
-class TestLTE:
-    def test_rsrq_1(self):
-        q = SignalQuality_LTE._rsrq_to_q(0)
-        assert(math.isclose(q, 1.0))
+class TestComputeSignalQuality:
+    def test_perfect_signal(self):
+        # Perfect signal values
+        rsrp = -80  # Maximum RSRP
+        rsrq = 0    # Maximum RSRQ
+        snr = 30    # Maximum SNR
+        quality = CellularSignalQuality.compute_signal_quality(rsrp, rsrq, snr)
+        assert quality == 100, f"Expected 100, got {quality}"
 
-        q = SignalQuality_LTE._rsrq_to_q(-6.999)
-        assert(math.isclose(q, 1.0))
+    def test_poor_signal(self):
+        # Poor signal values
+        rsrp = -120  # Minimum RSRP
+        rsrq = -30   # Minimum RSRQ
+        snr = -10    # Minimum SNR
+        quality = CellularSignalQuality.compute_signal_quality(rsrp, rsrq, snr)
+        assert quality == 0, f"Expected 0, got {quality}"
 
-        q = SignalQuality_LTE._rsrq_to_q(-7)
-        assert(math.isclose(q, 1.0))
+    def test_average_signal(self):
+        # Average signal values
+        rsrp = -100
+        rsrq = -15
+        snr = 15
+        quality = CellularSignalQuality.compute_signal_quality(rsrp, rsrq, snr)
+        assert 50 <= quality <= 60, f"Expected quality in range 50-60, got {quality}"
 
-        q = SignalQuality_LTE._rsrq_to_q(-10.25)
-        assert(math.isclose(q, 0.775))
-
-        q = SignalQuality_LTE._rsrq_to_q(-13.5)
-        assert(math.isclose(q, 0.55))
-
-        q = SignalQuality_LTE._rsrq_to_q(-16.75)
-        assert(math.isclose(q, 0.325))
-
-        q = SignalQuality_LTE._rsrq_to_q(-20)
-        assert(math.isclose(q, 0.10))
-
-        q = SignalQuality_LTE._rsrq_to_q(-20.001)
-        assert(math.isclose(q, 0.10))
-
-        q = SignalQuality_LTE._rsrq_to_q(-30)
-        assert(math.isclose(q, 0.10))
-
-    def test_rsrp_1(self):
-        q = SignalQuality_LTE._rsrp_to_q(0)
-        assert(math.isclose(q, 1.0))
-
-        q = SignalQuality_LTE._rsrp_to_q(-79.999)
-        assert(math.isclose(q, 1.00))
-
-        q = SignalQuality_LTE._rsrp_to_q(-80)
-        assert(math.isclose(q, 1.00))
-
-        q = SignalQuality_LTE._rsrp_to_q(-85)
-        assert(math.isclose(q, 0.775))
-
-        q = SignalQuality_LTE._rsrp_to_q(-90)
-        assert(math.isclose(q, 0.55))
-
-        q = SignalQuality_LTE._rsrp_to_q(-95)
-        assert(math.isclose(q, 0.325))
-
-        q = SignalQuality_LTE._rsrp_to_q(-100)
-        assert(math.isclose(q, 0.10))
-
-        q = SignalQuality_LTE._rsrp_to_q(-100.001)
-        assert(math.isclose(q, 0.10))
-
-        q = SignalQuality_LTE._rsrp_to_q(-140)
-        assert(math.isclose(q, 0.10))
-
-    def test_1(self):
-        # Excellent
-        lte_q = SignalQuality_LTE(-7, -80)
-        q = lte_q.quality()
-        assert(math.isclose(q, 1.0))
-
-        # Cell edge - Close to disconnection
-        lte_q = SignalQuality_LTE(-20, -100)
-        q = lte_q.quality()
-        print(q)
-        assert(math.isclose(q, 0.1))
+    def test_partial_signal(self):
+        # Partial signal with one parameter at max, others at min
+        rsrp = -80
+        rsrq = -30
+        snr = -10
+        quality = CellularSignalQuality.compute_signal_quality(rsrp, rsrq, snr)
+        assert 20 <= quality <= 30, f"Expected quality in range 20-30, got {quality}"

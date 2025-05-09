@@ -2,6 +2,8 @@ import dbus
 import logging
 import re  # Import regular expression module
 
+from .cellular_signal_quality import CellularSignalQuality
+
 logger = logging.getLogger('nitroc-ui')
 
 # Define global constants for D-Bus interfaces
@@ -131,54 +133,52 @@ class Modem():
         quality = self.get_signal_quality("Nr5g")
         assert quality is not None, "Signal quality is None"
 
-        res = dict()
         rsrp = quality['rsrp']
-        if Modem._is_valid_signal(rsrp):
-            res['rsrp'] = rsrp
-        else:
-            res['rsrp'] = -120  # Fallback value for rsrp
-
         rsrq = quality['rsrq']
-        if Modem._is_valid_rsrq(rsrq):
-            res['rsrq'] = rsrq
-        else:
-            res['rsrq'] = -20  # Fallback value for rsrq
-
         snr = quality['snr']
-        if Modem._is_valid_snr(snr):
-            res['snr'] = snr
-        else:
-            res['snr'] = 0  # Fallback value for snr
+
+        rsrp = CellularSignalQuality.limit_signal(rsrp)
+        rsrq =  CellularSignalQuality.limit_rsrq(rsrq)
+        snr =  CellularSignalQuality.limit_snr(snr)
+        total = CellularSignalQuality.compute_signal_quality(rsrp, rsrq, snr)
+
+        res = dict()
+        res['rsrp'] = rsrp
+        res['rsrq'] = rsrq
+        res['snr'] = snr
+        res['total'] = total
 
         return res
 
     def signal_lte(self):
+        """
+        Retrieve and process LTE signal quality metrics.
+
+        Returns:
+        dict: A dictionary containing processed LTE signal quality metrics.
+        """
         quality = self.get_signal_quality("Lte")
         assert quality is not None, "Signal quality is None"
 
-        res = dict()
         rsrp = quality['rsrp']
-        if Modem._is_valid_signal(rsrp):
-            res['rsrp'] = rsrp
-        else:
-            res['rsrp'] = -120  # Fallback value for rsrp
-
         rsrq = quality['rsrq']
-        if Modem._is_valid_rsrq(rsrq):
-            res['rsrq'] = rsrq
-        else:
-            res['rsrq'] = -20  # Fallback value for rsrq
-
-        # Some modems also report rssi and s/n, add if present
-        rssi = quality['rssi']
-        if rssi:
-            res['rssi'] = rssi
-
         snr = quality['snr']
-        if Modem._is_valid_snr(snr):
-            res['snr'] = snr
-        else:
-            res['snr'] = 0  # Fallback value for snr
+        rssi = quality['rssi']
+
+        # Clamp values to valid ranges
+        rsrp = CellularSignalQuality.limit_signal(rsrp)
+        rsrq = CellularSignalQuality.limit_rsrq(rsrq)
+        snr = CellularSignalQuality.limit_snr(snr)
+
+        # Compute overall signal quality
+        total = CellularSignalQuality.compute_signal_quality(rsrp, rsrq, snr)
+
+        res = dict()
+        res['rsrp'] = rsrp
+        res['rsrq'] = rsrq
+        res['snr'] = snr
+        res['rssi'] = rssi
+        res['total'] = total
 
         return res
 
@@ -275,8 +275,8 @@ class Modem():
             assert signal_properties is not None, "Signal properties are None"
 
             def to_float(value):
-                """Convert a value to float or return None if the value is None."""
-                return float(value) if value is not None else None
+                """Convert a value to float, round to 1 digit, or return None if the value is None."""
+                return round(float(value), 1) if value is not None else None
 
             # Parse the signal properties into a dictionary
             signal_quality = {
@@ -416,21 +416,6 @@ class Modem():
         technologies = [name for bit, name in access_tech_map.items() if bitmask & bit]
 
         return technologies
-
-    @staticmethod
-    def _is_valid_signal(value, min_value=-160, max_value=-40):
-        """Check if the signal value is within the valid range."""
-        return value is not None and min_value <= value <= max_value
-
-    @staticmethod
-    def _is_valid_rsrq(value, min_value=-40, max_value=0):
-        """Check if the RSRQ value is within the valid range."""
-        return value is not None and min_value <= value <= max_value
-
-    @staticmethod
-    def _is_valid_snr(value, min_value=-20, max_value=40):
-        """Check if the SNR value is within the valid range."""
-        return value is not None and min_value <= value <= max_value
 
     def _get_modem_property_as_string(self, property_name: str) -> str:
         """

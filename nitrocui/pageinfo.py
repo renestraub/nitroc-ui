@@ -282,29 +282,31 @@ class MainHandler(tornado.web.RequestHandler):
 
                 # Raw signal quality information
                 if mi.exists('signal-5g'):
-                    default = {'rsrp': '-', 'rsrq': '-', 'snr': '-'}
+                    default = {'rsrp': '-', 'rsrq': '-', 'snr': '-', 'total': '-'}
                     sig = mi.get(default, 'signal-5g')
                     text = nice([('rsrp', 'RSRP', 'dBm'),
                                 ('rsrq', 'RSRQ', 'dB'),
-                                ('snr', 'S/N', 'dB')],
+                                ('snr', 'S/N', 'dB'),
+                                ('total', 'Total', '%')],
                                 sig, 
-                                linebreak=True)
+                                linebreak=False)
                     tes.append(TE('Signal 5G', text))
                 if mi.exists('signal-lte'):
-                    default = {'rsrp': '-', 'rsrq': '-', 'rssi': '-', 'snr': '-'}
+                    default = {'rsrp': '-', 'rsrq': '-', 'rssi': '-', 'snr': '-', 'total': '-'}
                     sig = mi.get(default, 'signal-lte')
                     if 'rssi' in sig and 'snr' in sig:
                         text = nice([('rsrp', 'RSRP', 'dBm'),
                                     ('rsrq', 'RSRQ', 'dB'),
                                     ('rssi', 'RSSI', 'dB'),
-                                    ('snr', 'S/N', 'dB')],
+                                    ('snr', 'S/N', 'dB'),
+                                    ('total', 'Total', '%')],
                                     sig, 
-                                    linebreak=True)
+                                    linebreak=False)
                     else:
                         text = nice([('rsrp', 'RSRP', 'dBm'),
                                     ('rsrq', 'RSRQ', 'dB')],
                                     sig, 
-                                    linebreak=True)
+                                    linebreak=False)
                     tes.append(TE('Signal LTE', text))
                 if mi.exists('signal-umts'):
                     default = {'rscp': '-', 'ecio': '-'}
@@ -312,7 +314,7 @@ class MainHandler(tornado.web.RequestHandler):
                     text = nice([('rscp', 'RSCP', 'dBm'),
                                 ('ecio', 'ECIO', 'dB')],
                                 sig, 
-                                linebreak=True)
+                                linebreak=False)
                     tes.append(TE('Signal UMTS', text))
 
                 if (bearer_id := mi.get(-1, 'bearer-id')) != -1:
