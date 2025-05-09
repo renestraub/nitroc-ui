@@ -220,7 +220,7 @@ class Modem():
     def sim(self):
         assert self.modem_if is not None, "Modem object is not initialized"
         sim = self.modem_if.Get(MM_MODEM_IF, "Sim", dbus_interface=DBUS_PROPERTIES_IF)
-        if sim is not None:
+        if sim is not None and sim != '/':
             sim_id = int(sim.split('/')[-1])
             assert 0 <= sim_id <= 1000
             return SIM(sim_id)
@@ -317,7 +317,7 @@ class Modem():
                 return loc_info
 
         except dbus.DBusException as e:
-            logger.warning(f"failed to retrieve signal quality: {e}")
+            logger.warning(f"failed to retrieve location info: {e}")
             return None
 
     @staticmethod
