@@ -1,5 +1,0 @@
-tornado
-requests
-ping3
-pycurl
-dbus-python

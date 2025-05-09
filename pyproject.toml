@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=80", "wheel>=0.45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nitroc-ui"
+dynamic = ["version"]
+
+description = "NITROC Web UI and Cloud Logger"
+readme = "README.md"
+
+license = "MIT"
+authors = [
+    { name = "Rene Straub", email = "straub@see5.ch" }
+]
+
+requires-python = ">=3.11"
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: Unix"
+]
+
+dependencies = [
+    "tornado>=6.4",
+    "requests>=2.32",
+    "ping3>=4.0",
+    "pycurl>=7.45",
+    "dbus-python>=1.4"
+]
+
+[project.urls]
+Homepage = "https://github.com/renestraub/nitroc-ui"
+Repository = "https://github.com/renestraub/nitroc-ui.git"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "flake8"
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["tests"]
+where = ["."]
+
+[tool.setuptools.dynamic]
+version = { attr = "nitrocui._version.__version__" }
+
+[project.scripts]
+nitroc-ui-start = "nitrocui.server:run_server"
