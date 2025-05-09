@@ -18,8 +18,8 @@ class CrosEcSensors(SysInfoBase):
     def __init__(self):
         super().__init__()
 
-        self.volt_in_mv = None
-        self.volt_rtc_mv = None
+        self.volt_in_mv = 0.0
+        self.volt_rtc_mv = 0.0
     
     def poll(self) -> None:
         try:
@@ -28,14 +28,14 @@ class CrosEcSensors(SysInfoBase):
             self.volt_in_mv = self._extract_voltage(res, 'psu input voltage')
             self.volt_rtc_mv = self._extract_voltage(res, 'backup voltage')
         except FileNotFoundError:
-            self.volt_in_mv = 0
-            self.volt_rtc_mv = 0
+            self.volt_in_mv = 0.0
+            self.volt_rtc_mv = 0.0
 
-    def input_voltage(self) -> float | None:
-        return self.volt_in_mv / 1000.0 if self.volt_in_mv else None
+    def input_voltage(self) -> float:
+        return self.volt_in_mv / 1000.0
 
-    def rtc_voltage(self) -> float | None:
-        return self.volt_rtc_mv / 1000.0 if self.volt_rtc_mv else None
+    def rtc_voltage(self) -> float:
+        return self.volt_rtc_mv / 1000.0
 
     def bootloader_version(self) -> str:
         version = "unknown"
@@ -50,8 +50,8 @@ class CrosEcSensors(SysInfoBase):
             pass
         return version
 
-    def _extract_voltage(self, res, sensor) -> float | None:
+    def _extract_voltage(self, res, sensor) -> float:
         pattern = rf"Name: {re.escape(sensor)}\n\s*Value: ([-+]?\d+.\d+)"
         match = re.search(pattern, res, re.MULTILINE)
         # print(f'**** {match} ***')
-        return float(match.group(1)) if match else None
+        return float(match.group(1)) if match else 0.0
