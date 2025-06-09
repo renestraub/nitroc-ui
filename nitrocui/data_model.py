@@ -392,7 +392,9 @@ class ModelWorker(threading.Thread):
             # FN990 reports LTE and 5G as 2nd technology
             if access_tech == '5gnr' or access_tech2 == '5gnr':
                 sig = m.signal_5g()
-                info['signal-5g'] = sig
+                if sig is not None:
+                    # Only add if signal is available
+                    info['signal-5g'] = sig
 
             if access_tech == 'lte':
                 sig = m.signal_lte()

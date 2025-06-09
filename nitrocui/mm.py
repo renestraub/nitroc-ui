@@ -137,18 +137,22 @@ class Modem():
         rsrq = quality['rsrq']
         snr = quality['snr']
 
-        rsrp = CellularSignalQuality.limit_signal(rsrp)
-        rsrq =  CellularSignalQuality.limit_rsrq(rsrq)
-        snr =  CellularSignalQuality.limit_snr(snr)
-        total = CellularSignalQuality.compute_signal_quality(rsrp, rsrq, snr)
+        if rsrp is not None and rsrq is not None and snr is not None:
+            rsrp = CellularSignalQuality.limit_signal(rsrp)
+            rsrq =  CellularSignalQuality.limit_rsrq(rsrq)
+            snr =  CellularSignalQuality.limit_snr(snr)
+            total = CellularSignalQuality.compute_signal_quality(rsrp, rsrq, snr)
 
-        res = dict()
-        res['rsrp'] = rsrp
-        res['rsrq'] = rsrq
-        res['snr'] = snr
-        res['total'] = total
+            res = dict()
+            res['rsrp'] = rsrp
+            res['rsrq'] = rsrq
+            res['snr'] = snr
+            res['total'] = total
 
-        return res
+            return res
+        else:
+            logger.warning("5G signal quality metrics are not available")
+            return None
 
     def signal_lte(self):
         """
